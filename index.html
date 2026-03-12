@@ -828,6 +828,108 @@
     border-color: rgba(232,255,71,0.2);
     color: var(--accent);
   }
+
+  /* ── SEARCH DROPDOWN ── */
+  .search-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0; right: 0;
+    background: var(--bg2);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    z-index: 200;
+    overflow: hidden;
+    display: none;
+  }
+
+  .search-dropdown.open { display: block; }
+
+  .search-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+  }
+
+  .search-result:hover, .search-result.focused { background: var(--bg3); }
+
+  .search-result-cover {
+    width: 32px;
+    height: 42px;
+    border-radius: 4px;
+    object-fit: cover;
+    background: var(--bg3);
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+
+  .search-result-cover-placeholder {
+    width: 32px;
+    height: 42px;
+    border-radius: 4px;
+    background: var(--bg3);
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .search-result-info { flex: 1; min-width: 0; }
+
+  .search-result-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .search-result-meta {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .search-result-rating {
+    font-size: 12px;
+    color: #c8a84a;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .search-empty {
+    padding: 20px 14px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .search-loading {
+    padding: 16px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  .search-footer {
+    padding: 10px 14px;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    background: var(--bg3);
+    border-top: 1px solid var(--border);
+  }
+
+  .search-footer span { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -880,8 +982,8 @@
         </div>
       </div>
       <div class="hero-actions">
-        <button class="btn-primary" onclick="window.location.href='game.html?igdb=119133'">🎮 Log this game</button>
-        <button class="btn-outline" onclick="window.location.href='game.html?igdb=119133'">Read reviews</button>
+        <button class="btn-primary" onclick="window.location.href='game.html?igdb=1942'">🎮 Log this game</button>
+        <button class="btn-outline" onclick="window.location.href='game.html?igdb=1942'">Read reviews</button>
         <button class="btn-outline">❤️ Favorite</button>
       </div>
     </div>
@@ -892,15 +994,16 @@
 <div class="search-bar-wrap fade-up delay-1">
   <div class="search-input-wrap">
     <span class="search-icon">🔍</span>
-    <input class="search-input" type="text" placeholder="Search games, players, lists...">
+    <input class="search-input" id="search-input" type="text" placeholder="Search 200,000+ games..." autocomplete="off">
+    <div class="search-dropdown" id="search-dropdown"></div>
   </div>
   <div class="filter-tabs">
-    <button class="filter-tab active">All</button>
-    <button class="filter-tab">PC</button>
-    <button class="filter-tab">PlayStation</button>
-    <button class="filter-tab">Xbox</button>
-    <button class="filter-tab">Nintendo</button>
-    <button class="filter-tab">Mobile</button>
+    <button class="filter-tab active" data-platform="">All</button>
+    <button class="filter-tab" data-platform="PC">PC</button>
+    <button class="filter-tab" data-platform="PlayStation">PlayStation</button>
+    <button class="filter-tab" data-platform="Xbox">Xbox</button>
+    <button class="filter-tab" data-platform="Nintendo">Nintendo</button>
+    <button class="filter-tab" data-platform="Mobile">Mobile</button>
   </div>
 </div>
 
@@ -912,7 +1015,7 @@
   </div>
   <div class="games-grid">
 
-    <div class="game-card" onclick="window.location.href='game.html?igdb=119133'" style="cursor:pointer">
+    <div class="game-card" onclick="window.location.href='game.html?igdb=1942'" style="cursor:pointer">
       <div class="game-cover">
         <div class="game-cover-bg" style="background: linear-gradient(135deg,#1a0a2e,#3d1a6e)">🌌</div>
         <div class="game-rank">#1</div>
@@ -1202,15 +1305,20 @@
 </footer>
 
 <script>
-  // Filter tabs
+  // ── FILTER TABS ──
+  let activePlatform = '';
+
   document.querySelectorAll('.filter-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
+      activePlatform = tab.dataset.platform || '';
+      const q = document.getElementById('search-input').value.trim();
+      if (q.length >= 2) searchGames(q);
     });
   });
 
-  // Genre pills
+  // ── GENRE PILLS ──
   document.querySelectorAll('.genre-pill').forEach(pill => {
     pill.addEventListener('click', () => {
       document.querySelectorAll('.genre-pill').forEach(p => p.classList.remove('active'));
@@ -1218,7 +1326,7 @@
     });
   });
 
-  // Like interaction
+  // ── LIKE INTERACTIONS ──
   document.querySelectorAll('.review-like').forEach(btn => {
     if (btn.textContent.includes('♥')) {
       btn.addEventListener('click', () => {
@@ -1230,17 +1338,167 @@
     }
   });
 
-  // Overlay log button feedback
+  // ── OVERLAY BUTTONS ──
   document.querySelectorAll('.overlay-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       btn.style.background = 'var(--accent)';
       btn.style.borderColor = 'var(--accent)';
-      setTimeout(() => {
-        btn.style.background = '';
-        btn.style.borderColor = '';
-      }, 600);
+      setTimeout(() => { btn.style.background = ''; btn.style.borderColor = ''; }, 600);
     });
+  });
+
+  // ── SEARCH ──
+  const searchInput = document.getElementById('search-input');
+  const dropdown = document.getElementById('search-dropdown');
+  let debounceTimer = null;
+  let lastQuery = '';
+
+  // Platform name → IGDB platform ids mapping
+  const platformMap = {
+    'PC': 6,
+    'PlayStation': 48,   // PS4 (also catches PS5 = 167)
+    'Xbox': 49,
+    'Nintendo': 130,
+    'Mobile': 34
+  };
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim();
+    if (q === lastQuery) return;
+    lastQuery = q;
+
+    clearTimeout(debounceTimer);
+
+    if (q.length < 2) {
+      closeDropdown();
+      return;
+    }
+
+    // Show loading immediately
+    showDropdown(`<div class="search-loading">Searching...</div>`);
+
+    // Debounce — wait 300ms after user stops typing
+    debounceTimer = setTimeout(() => searchGames(q), 300);
+  });
+
+  async function searchGames(q) {
+    try {
+      // Build IGDB query
+      let platformFilter = '';
+      if (activePlatform && platformMap[activePlatform]) {
+        // Include both the main platform id and related ones (e.g. PS4 + PS5)
+        const pid = platformMap[activePlatform];
+        const extras = activePlatform === 'PlayStation' ? [48, 167, 9, 46] :
+                       activePlatform === 'Xbox'        ? [49, 169, 11] :
+                       activePlatform === 'Nintendo'    ? [130, 137, 41, 21] :
+                       activePlatform === 'PC'          ? [6] :
+                       activePlatform === 'Mobile'      ? [34, 39] : [pid];
+        platformFilter = `& platforms = (${extras.join(',')})`;
+      }
+
+      const body = `
+        search "${q.replace(/"/g, '')}";
+        fields name, slug, cover.url, genres.name, platforms.name,
+               first_release_date, aggregated_rating;
+        where version_parent = null ${platformFilter};
+        limit 8;
+      `;
+
+      const res = await fetch('/.netlify/functions/igdb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: 'games', body })
+      });
+
+      const games = await res.json();
+
+      if (!games || games.length === 0) {
+        showDropdown(`<div class="search-empty">No games found for "<strong style="color:var(--text)">${q}</strong>"</div>`);
+        return;
+      }
+
+      const html = games.map(game => {
+        const cover = game.cover
+          ? `<img class="search-result-cover" src="https:${game.cover.url.replace('t_thumb', 't_cover_small')}" alt="${game.name}">`
+          : `<div class="search-result-cover-placeholder">🎮</div>`;
+
+        const year = game.first_release_date
+          ? new Date(game.first_release_date * 1000).getFullYear()
+          : '';
+
+        const genre = game.genres?.[0]?.name || '';
+        const meta = [genre, year].filter(Boolean).join(' · ');
+
+        const rating = game.aggregated_rating
+          ? `★ ${(game.aggregated_rating / 20).toFixed(1)}`
+          : '';
+
+        return `
+          <div class="search-result" onclick="goToGame(${game.id})">
+            ${cover}
+            <div class="search-result-info">
+              <div class="search-result-title">${game.name}</div>
+              <div class="search-result-meta">${meta}</div>
+            </div>
+            ${rating ? `<span class="search-result-rating">${rating}</span>` : ''}
+          </div>
+        `;
+      }).join('');
+
+      showDropdown(html + `<div class="search-footer">Showing top results from <span>IGDB</span> · 200,000+ games</div>`);
+
+    } catch (err) {
+      showDropdown(`<div class="search-empty">Something went wrong. Please try again.</div>`);
+    }
+  }
+
+  function goToGame(igdbId) {
+    window.location.href = `game.html?igdb=${igdbId}`;
+  }
+
+  function showDropdown(html) {
+    dropdown.innerHTML = html;
+    dropdown.classList.add('open');
+  }
+
+  function closeDropdown() {
+    dropdown.classList.remove('open');
+    dropdown.innerHTML = '';
+  }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+      closeDropdown();
+    }
+  });
+
+  // Navigate with keyboard
+  searchInput.addEventListener('keydown', (e) => {
+    const results = dropdown.querySelectorAll('.search-result');
+    const active = dropdown.querySelector('.search-result.focused');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (!active) {
+        results[0]?.classList.add('focused');
+      } else {
+        const idx = [...results].indexOf(active);
+        active.classList.remove('focused');
+        results[Math.min(idx + 1, results.length - 1)]?.classList.add('focused');
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (active) {
+        const idx = [...results].indexOf(active);
+        active.classList.remove('focused');
+        results[Math.max(idx - 1, 0)]?.classList.add('focused');
+      }
+    } else if (e.key === 'Enter') {
+      if (active) active.click();
+    } else if (e.key === 'Escape') {
+      closeDropdown();
+    }
   });
 </script>
 
