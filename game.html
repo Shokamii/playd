@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loading... — Playd</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0f;
+    --bg2: #131316;
+    --bg3: #1a1a1f;
+    --border: rgba(255,255,255,0.07);
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --muted: #6b6b7a;
+    --card-radius: 10px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    height: 64px;
+    background: rgba(13,13,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .logo span {
+    color: var(--text);
+    opacity: 0.3;
+    font-size: 13px;
+    letter-spacing: 1px;
+    font-family: 'DM Sans', sans-serif;
+    margin-left: 6px;
+    font-weight: 300;
+    vertical-align: middle;
+  }
+
+  .nav-links { display: flex; gap: 32px; list-style: none; align-items: center; }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: color 0.2s;
+    text-transform: uppercase;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-right { display: flex; gap: 12px; align-items: center; }
+
+  .btn-ghost {
+    padding: 8px 18px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+  .btn-accent {
+    padding: 8px 20px;
+    background: var(--accent);
+    border: none;
+    color: #0d0d0f;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-accent:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(232,255,71,0.25); }
+
+  /* ── LOADING STATE ── */
+  .loading-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    transition: opacity 0.4s;
+  }
+
+  .loading-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .loading-bar-track {
+    width: 200px;
+    height: 2px;
+    background: var(--bg3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .loading-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: loadingBar 1.2s ease-in-out infinite;
+  }
+
+  @keyframes loadingBar {
+    0% { width: 0%; margin-left: 0%; }
+    50% { width: 60%; margin-left: 20%; }
+    100% { width: 0%; margin-left: 100%; }
+  }
+
+  .loading-text {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── ERROR STATE ── */
+  .error-screen {
+    display: none;
+    margin-top: 120px;
+    text-align: center;
+    padding: 60px 48px;
+  }
+
+  .error-icon { font-size: 48px; margin-bottom: 16px; }
+  .error-title { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+  .error-msg { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+  .btn-back {
+    padding: 10px 24px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+  }
+  .btn-back:hover { border-color: rgba(255,255,255,0.2); }
+
+  /* ── HERO BACKDROP ── */
+  .hero-backdrop {
+    position: relative;
+    margin-top: 64px;
+    height: 460px;
+    overflow: hidden;
+  }
+
+  .hero-backdrop-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: blur(40px) brightness(0.3);
+    transform: scale(1.1);
+    transition: background-image 0.5s;
+  }
+
+  .hero-backdrop-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, rgba(13,13,15,0.4) 0%, rgba(13,13,15,0.2) 50%);
+  }
+
+  .hero-backdrop-fade {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 240px;
+    background: linear-gradient(to bottom, transparent, var(--bg));
+    z-index: 2;
+  }
+
+  /* ── GAME HEADER ── */
+  .game-header {
+    position: relative;
+    z-index: 3;
+    margin-top: -340px;
+    padding: 0 48px;
+    display: flex;
+    gap: 40px;
+    align-items: flex-end;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+
+  .game-header.visible { opacity: 1; }
+
+  .game-poster {
+    width: 180px;
+    flex-shrink: 0;
+    aspect-ratio: 3/4;
+    border-radius: 12px;
+    background: var(--bg3);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .game-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .game-poster-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    background: linear-gradient(145deg, #1a1a2e, #2a1a1a);
+  }
+
+  .game-info { flex: 1; padding-bottom: 8px; }
+
+  .game-breadcrumb {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .game-breadcrumb a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  .game-breadcrumb a:hover { color: var(--accent); }
+
+  .game-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    line-height: 0.95;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+
+  .game-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+
+  .game-tag {
+    padding: 4px 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .game-tag.platform { background: rgba(232,200,80,0.07); border-color: rgba(232,200,80,0.15); color: #c8a84a; }
+  .game-tag.year { background: rgba(232,255,71,0.06); border-color: rgba(232,255,71,0.15); color: var(--accent); }
+
+  .game-meta-row { display: flex; align-items: center; gap: 24px; margin-bottom: 24px; flex-wrap: wrap; }
+
+  .rating-display { display: flex; align-items: center; gap: 8px; }
+  .rating-stars { display: flex; gap: 3px; }
+  .star { color: #c8a84a; font-size: 16px; }
+  .star.empty { opacity: 0.15; }
+
+  .rating-number { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: #c8a84a; }
+  .rating-count { font-size: 12px; color: var(--muted); }
+  .meta-divider { width: 1px; height: 24px; background: var(--border); }
+  .meta-stat { text-align: center; }
+  .meta-stat-val { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; display: block; }
+  .meta-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+
+  /* ── ACTION BUTTONS ── */
+  .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+
+  .action-btn.primary { background: var(--accent); color: #0d0d0f; }
+  .action-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(232,255,71,0.25); }
+  .action-btn.primary.active { background: #b8cc30; }
+
+  .action-btn.secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+  .action-btn.secondary:hover { border-color: rgba(255,255,255,0.15); }
+  .action-btn.secondary.liked { border-color: #ff6b8a; color: #ff6b8a; background: rgba(255,107,138,0.06); }
+  .action-btn.secondary.faved { border-color: #c8a84a; color: #c8a84a; background: rgba(200,168,74,0.08); }
+
+  .action-btn .count { background: rgba(255,255,255,0.1); padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+
+  /* ── MAIN LAYOUT ── */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 32px;
+    padding: 40px 48px 60px;
+  }
+
+  /* ── CONTENT SECTIONS ── */
+  .content-section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  .content-section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .game-description { font-size: 14px; color: #a0a0b0; line-height: 1.85; }
+  .game-description p + p { margin-top: 14px; }
+
+  /* ── RATING BREAKDOWN ── */
+  .rating-breakdown { display: flex; gap: 32px; align-items: center; }
+
+  .big-rating { text-align: center; flex-shrink: 0; }
+  .big-rating-num { font-family: 'Bebas Neue', sans-serif; font-size: 72px; line-height: 1; color: #c8a84a; }
+  .big-rating-stars { display: flex; gap: 4px; justify-content: center; margin: 6px 0 4px; }
+  .big-rating-stars .star { font-size: 18px; }
+  .big-rating-count { font-size: 12px; color: var(--muted); }
+
+  .rating-bars { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .rating-bar-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .rating-bar-label { width: 20px; color: var(--muted); text-align: right; flex-shrink: 0; font-size: 11px; }
+  .rating-bar-track { flex: 1; height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .rating-bar-fill { height: 100%; background: #c8a84a; border-radius: 3px; transition: width 1s ease; width: 0%; }
+  .rating-bar-count { width: 32px; font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
+  /* ── WRITE REVIEW ── */
+  .write-review-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .write-review-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+
+  .user-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #a0cc00);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0d0d0f;
+    flex-shrink: 0;
+  }
+
+  .write-review-stars { display: flex; gap: 4px; }
+  .write-star { font-size: 22px; color: var(--muted); transition: color 0.15s, transform 0.1s; cursor: pointer; }
+  .write-star:hover, .write-star.on { color: #c8a84a; transform: scale(1.15); }
+
+  .review-textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    line-height: 1.65;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 10px;
+  }
+  .review-textarea:focus { border-color: rgba(232,200,80,0.3); }
+  .review-textarea::placeholder { color: var(--muted); }
+
+  .review-submit-row { display: flex; justify-content: flex-end; }
+
+  .btn-submit {
+    padding: 8px 20px;
+    background: var(--accent);
+    color: #0d0d0f;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,255,71,0.2); }
+
+  /* ── REVIEWS ── */
+  .reviews-sort { display: flex; gap: 4px; }
+
+  .sort-btn {
+    padding: 4px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .sort-btn:hover { color: var(--text); }
+  .sort-btn.active { background: var(--bg3); border-color: var(--border); color: var(--text); }
+
+  .review-item { padding: 20px 0; border-bottom: 1px solid var(--border); }
+  .review-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .review-item:first-child { padding-top: 0; }
+
+  .review-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+
+  .reviewer-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0d0d0f;
+    flex-shrink: 0;
+  }
+
+  .reviewer-info { flex: 1; }
+  .reviewer-name { font-size: 13px; font-weight: 600; }
+  .reviewer-date { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  .review-item-stars { display: flex; gap: 3px; margin-bottom: 10px; }
+  .ris { font-size: 13px; color: #c8a84a; }
+  .ris.e { opacity: 0.15; }
+
+  .review-item-text { font-size: 13px; color: #9898a8; line-height: 1.75; margin-bottom: 12px; }
+
+  .review-item-footer { display: flex; gap: 14px; align-items: center; }
+
+  .review-action {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.15s;
+    background: none;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0;
+  }
+  .review-action:hover { color: var(--text); }
+  .review-action.liked { color: #ff6b8a; }
+
+  .no-reviews {
+    text-align: center;
+    padding: 40px 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar-widget {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .widget-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .detail-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .detail-row:first-child { padding-top: 0; }
+  .detail-label { color: var(--muted); flex-shrink: 0; margin-right: 12px; }
+  .detail-value { color: var(--text); text-align: right; font-weight: 500; }
+  .metacritic-good { color: #6ddc6d; font-weight: 700; }
+  .metacritic-ok { color: #e8c84a; font-weight: 700; }
+  .metacritic-bad { color: #e84a4a; font-weight: 700; }
+
+  /* ── SKELETON LOADERS ── */
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg3) 25%, #222228 50%, var(--bg3) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 4px;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 28px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+  .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; color: var(--accent); opacity: 0.4; }
+  .footer-copy { font-size: 11px; color: var(--muted); opacity: 0.5; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { opacity: 0; animation: fadeUp 0.5s ease forwards; }
+  .delay-1 { animation-delay: 0.15s; }
+  .delay-2 { animation-delay: 0.3s; }
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div class="loading-screen" id="loading-screen">
+  <div class="loading-logo">Playd</div>
+  <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
+  <div class="loading-text" id="loading-text">Fetching game data...</div>
+</div>
+
+<!-- ERROR SCREEN -->
+<div class="error-screen" id="error-screen">
+  <div class="error-icon">🎮</div>
+  <div class="error-title">Game not found</div>
+  <p class="error-msg" id="error-msg">We couldn't find this game. It may not be in our database yet.</p>
+  <a href="index.html" class="btn-back">← Back to Discover</a>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo">Playd<span>beta</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Discover</a></li>
+    <li><a href="#">Games</a></li>
+    <li><a href="#">Lists</a></li>
+    <li><a href="#">Members</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="btn-ghost">Sign in</button>
+    <button class="btn-accent">Create account</button>
+  </div>
+</nav>
+
+<!-- HERO BACKDROP -->
+<div class="hero-backdrop">
+  <div class="hero-backdrop-bg" id="hero-bg"></div>
+  <div class="hero-backdrop-overlay"></div>
+  <div class="hero-backdrop-fade"></div>
+</div>
+
+<!-- GAME HEADER -->
+<div class="game-header" id="game-header">
+  <div class="game-poster" id="game-poster">
+    <div class="game-poster-placeholder">🎮</div>
+  </div>
+  <div class="game-info">
+    <div class="game-breadcrumb">
+      <a href="index.html">Home</a> › <a href="#">Games</a> › <span id="breadcrumb-genre">—</span> › <span id="breadcrumb-title">—</span>
+    </div>
+    <h1 class="game-title" id="game-title">—</h1>
+    <div class="game-tags" id="game-tags"></div>
+    <div class="game-meta-row">
+      <div class="rating-display">
+        <div class="rating-stars" id="header-stars"></div>
+        <span class="rating-number" id="header-rating">—</span>
+        <span class="rating-count" id="header-rating-count">/ 5 · — ratings</span>
+      </div>
+      <div class="meta-divider"></div>
+      <div class="meta-stat">
+        <span class="meta-stat-val" id="stat-logged">—</span>
+        <span class="meta-stat-label">Logged</span>
+      </div>
+      <div class="meta-divider"></div>
+      <div class="meta-stat">
+        <span class="meta-stat-val" id="stat-reviews">—</span>
+        <span class="meta-stat-label">Reviews</span>
+      </div>
+      <div class="meta-divider"></div>
+      <div class="meta-stat">
+        <span class="meta-stat-val" id="stat-favorites">—</span>
+        <span class="meta-stat-label">Favorites</span>
+      </div>
+    </div>
+    <div class="action-buttons">
+      <button class="action-btn primary" id="btn-log">🎮 Log this game</button>
+      <button class="action-btn secondary" id="btn-like">♥ Like <span class="count" id="like-count">—</span></button>
+      <button class="action-btn secondary" id="btn-fav">★ Favorite <span class="count" id="fav-count">—</span></button>
+      <button class="action-btn secondary" id="btn-backlog">📋 Backlog</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="main-layout fade-up delay-1" id="main-layout" style="display:none">
+
+  <!-- LEFT -->
+  <div>
+
+    <!-- DESCRIPTION -->
+    <div class="content-section">
+      <div class="content-section-title">About</div>
+      <div class="game-description" id="game-description">
+        <p>Loading description...</p>
+      </div>
+    </div>
+
+    <!-- RATINGS BREAKDOWN -->
+    <div class="content-section">
+      <div class="content-section-title">Ratings Breakdown</div>
+      <div class="rating-breakdown">
+        <div class="big-rating">
+          <div class="big-rating-num" id="big-rating-num">—</div>
+          <div class="big-rating-stars" id="big-rating-stars"></div>
+          <div class="big-rating-count" id="big-rating-count">— ratings</div>
+        </div>
+        <div class="rating-bars" id="rating-bars">
+          <!-- filled by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- WRITE REVIEW -->
+    <div class="content-section">
+      <div class="content-section-title">Write a Review</div>
+      <div class="write-review-box">
+        <div class="write-review-header">
+          <div class="user-avatar">ME</div>
+          <div class="write-review-stars" id="write-stars">
+            <span class="write-star" data-val="1">★</span>
+            <span class="write-star" data-val="2">★</span>
+            <span class="write-star" data-val="3">★</span>
+            <span class="write-star" data-val="4">★</span>
+            <span class="write-star" data-val="5">★</span>
+          </div>
+        </div>
+        <textarea class="review-textarea" id="review-text" placeholder="Share your thoughts..."></textarea>
+        <div class="review-submit-row">
+          <button class="btn-submit" id="submit-review">Post Review</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEWS LIST -->
+    <div class="content-section">
+      <div class="content-section-title">
+        <span>Reviews <span style="color:var(--muted);font-size:11px;font-weight:400" id="review-count-label"></span></span>
+        <div class="reviews-sort">
+          <button class="sort-btn active">Popular</button>
+          <button class="sort-btn">Recent</button>
+        </div>
+      </div>
+      <div id="reviews-container">
+        <div class="no-reviews">Loading reviews...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SIDEBAR -->
+  <div>
+
+    <div class="sidebar-widget">
+      <div class="widget-title">Game Details</div>
+      <div id="game-details-list">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <div class="sidebar-widget">
+      <div class="widget-title">Similar Games</div>
+      <div id="similar-games-list">
+        <div style="color:var(--muted);font-size:13px">Loading...</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Playd</div>
+  <div class="footer-copy">© 2025 Playd. All rights reserved.</div>
+</footer>
+
+<script>
+// ── INIT SUPABASE ──
+const { createClient } = supabase;
+const sb = createClient(CONFIG.supabase_url, CONFIG.supabase_key);
+
+// ── IGDB TOKEN CACHE ──
+let igdbToken = null;
+let igdbTokenExpiry = 0;
+
+async function getIGDBToken() {
+  if (igdbToken && Date.now() < igdbTokenExpiry) return igdbToken;
+  const res = await fetch(
+    `https://id.twitch.tv/oauth2/token?client_id=${CONFIG.igdb_client_id}&client_secret=${CONFIG.igdb_client_secret}&grant_type=client_credentials`,
+    { method: 'POST' }
+  );
+  const data = await res.json();
+  igdbToken = data.access_token;
+  igdbTokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
+  return igdbToken;
+}
+
+async function fetchFromIGDB(endpoint, body) {
+  const token = await getIGDBToken();
+  const res = await fetch(`https://api.igdb.com/v4/${endpoint}`, {
+    method: 'POST',
+    headers: {
+      'Client-ID': CONFIG.igdb_client_id,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'text/plain'
+    },
+    body
+  });
+  return res.json();
+}
+
+// ── HELPERS ──
+function formatCount(n) {
+  if (!n) return '0';
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+function renderStars(rating, size = 16) {
+  const full = Math.floor(rating);
+  const half = rating % 1 >= 0.3 ? 1 : 0;
+  const empty = 5 - full - half;
+  let html = '';
+  for (let i = 0; i < full; i++) html += `<span class="star" style="font-size:${size}px">★</span>`;
+  if (half) html += `<span class="star" style="font-size:${size}px;opacity:0.5">★</span>`;
+  for (let i = 0; i < empty; i++) html += `<span class="star empty" style="font-size:${size}px">★</span>`;
+  return html;
+}
+
+function renderReviewStars(rating) {
+  let html = '';
+  for (let i = 1; i <= 5; i++) {
+    html += `<span class="ris${i > rating ? ' e' : ''}">★</span>`;
+  }
+  return html;
+}
+
+function avatarColors(str) {
+  const colors = [
+    ['#e8ff47','#a0cc00'], ['#ff6b35','#ff4488'],
+    ['#47ffcc','#47a0ff'], ['#cc47ff','#ff47aa'],
+    ['#ffcc47','#ff8847'], ['#47ccff','#4488ff']
+  ];
+  const idx = (str.charCodeAt(0) + str.charCodeAt(str.length - 1)) % colors.length;
+  return colors[idx];
+}
+
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr);
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
+function setLoadingText(txt) {
+  document.getElementById('loading-text').textContent = txt;
+}
+
+function hideLoading() {
+  const el = document.getElementById('loading-screen');
+  el.style.opacity = '0';
+  setTimeout(() => el.style.display = 'none', 400);
+}
+
+function showError(msg) {
+  hideLoading();
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('error-screen').style.display = 'block';
+}
+
+// ── MAIN LOAD ──
+async function loadGame() {
+  const params = new URLSearchParams(window.location.search);
+  const gameId = params.get('id');         // Supabase game id
+  const igdbId  = params.get('igdb');      // or direct IGDB id
+  const slug    = params.get('slug');      // or slug
+
+  if (!gameId && !igdbId && !slug) {
+    showError('No game specified. Please go back and select a game.');
+    return;
+  }
+
+  try {
+    // ── STEP 1: Try Supabase first ──
+    setLoadingText('Checking database...');
+    let game = null;
+
+    if (gameId) {
+      const { data } = await sb.from('games').select('*').eq('id', gameId).single();
+      game = data;
+    } else if (slug) {
+      const { data } = await sb.from('games').select('*').eq('slug', slug).single();
+      game = data;
+    } else if (igdbId) {
+      const { data } = await sb.from('games').select('*').eq('igdb_id', igdbId).single();
+      game = data;
+    }
+
+    // ── STEP 2: If not in Supabase, fetch from IGDB and save ──
+    if (!game && igdbId) {
+      setLoadingText('Fetching from IGDB...');
+      const igdbGames = await fetchFromIGDB('games',
+        `fields name,slug,summary,cover.url,genres.name,platforms.name,
+         first_release_date,involved_companies.company.name,involved_companies.developer,
+         involved_companies.publisher,aggregated_rating,aggregated_rating_count;
+         where id = ${igdbId};`
+      );
+
+      if (!igdbGames || igdbGames.length === 0) {
+        showError('Game not found on IGDB.');
+        return;
+      }
+
+      const ig = igdbGames[0];
+      const coverUrl = ig.cover
+        ? ig.cover.url.replace('t_thumb', 't_cover_big')
+        : null;
+
+      const year = ig.first_release_date
+        ? new Date(ig.first_release_date * 1000).getFullYear()
+        : null;
+
+      const developer = ig.involved_companies?.find(c => c.developer)?.company?.name || null;
+      const publisher = ig.involved_companies?.find(c => c.publisher)?.company?.name || null;
+      const genres = ig.genres?.map(g => g.name) || [];
+      const platforms = ig.platforms?.map(p => p.name) || [];
+      const metacritic = ig.aggregated_rating ? Math.round(ig.aggregated_rating) : null;
+
+      // Save to Supabase
+      setLoadingText('Saving to database...');
+      const { data: inserted, error } = await sb.from('games').insert({
+        igdb_id: ig.id,
+        title: ig.name,
+        slug: ig.slug,
+        cover_url: coverUrl ? `https:${coverUrl}` : null,
+        description: ig.summary || null,
+        release_year: year,
+        developer,
+        publisher,
+        genres,
+        platforms,
+        metacritic
+      }).select().single();
+
+      if (error && error.code === '23505') {
+        // Already exists (race condition) — just fetch it
+        const { data: existing } = await sb.from('games').select('*').eq('igdb_id', igdbId).single();
+        game = existing;
+      } else {
+        game = inserted;
+      }
+    }
+
+    if (!game) {
+      showError('Game not found. Try searching by IGDB ID.');
+      return;
+    }
+
+    // ── STEP 3: Fetch reviews from Supabase ──
+    setLoadingText('Loading reviews...');
+    const { data: reviews } = await sb
+      .from('reviews')
+      .select('*')
+      .eq('game_id', game.id)
+      .order('likes', { ascending: false })
+      .limit(20);
+
+    // ── STEP 4: Fetch stats ──
+    const { count: loggedCount } = await sb
+      .from('user_games')
+      .select('*', { count: 'exact', head: true })
+      .eq('game_id', game.id);
+
+    const { count: favCount } = await sb
+      .from('user_games')
+      .select('*', { count: 'exact', head: true })
+      .eq('game_id', game.id)
+      .eq('favorited', true);
+
+    const { count: likeCount } = await sb
+      .from('user_games')
+      .select('*', { count: 'exact', head: true })
+      .eq('game_id', game.id)
+      .eq('liked', true);
+
+    // ── RENDER ──
+    renderPage(game, reviews || [], loggedCount || 0, favCount || 0, likeCount || 0);
+
+  } catch (err) {
+    console.error(err);
+    showError('Something went wrong loading this game. Please try again.');
+  }
+}
+
+function renderPage(game, reviews, loggedCount, favCount, likeCount) {
+  // Title
+  document.title = `${game.title} — Playd`;
+  document.getElementById('game-title').textContent = game.title;
+  document.getElementById('breadcrumb-title').textContent = game.title;
+  document.getElementById('breadcrumb-genre').textContent = game.genres?.[0] || 'Games';
+
+  // Poster
+  const poster = document.getElementById('game-poster');
+  if (game.cover_url) {
+    poster.innerHTML = `<img src="${game.cover_url}" alt="${game.title}" />`;
+    // Hero backdrop blur
+    document.getElementById('hero-bg').style.backgroundImage = `url('${game.cover_url}')`;
+  }
+
+  // Tags
+  const tagsEl = document.getElementById('game-tags');
+  let tagsHTML = '';
+  (game.genres || []).slice(0, 4).forEach(g => tagsHTML += `<span class="game-tag">${g}</span>`);
+  (game.platforms || []).slice(0, 3).forEach(p => tagsHTML += `<span class="game-tag platform">${p}</span>`);
+  if (game.release_year) tagsHTML += `<span class="game-tag year">${game.release_year}</span>`;
+  tagsEl.innerHTML = tagsHTML;
+
+  // Ratings
+  const avgRating = reviews.length
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : '—';
+
+  document.getElementById('header-stars').innerHTML = avgRating !== '—' ? renderStars(parseFloat(avgRating)) : '';
+  document.getElementById('header-rating').textContent = avgRating;
+  document.getElementById('header-rating-count').textContent = `/ 5 · ${formatCount(reviews.length)} ratings`;
+  document.getElementById('stat-logged').textContent = formatCount(loggedCount);
+  document.getElementById('stat-reviews').textContent = formatCount(reviews.length);
+  document.getElementById('stat-favorites').textContent = formatCount(favCount);
+
+  // Like / fav counts
+  document.getElementById('like-count').textContent = formatCount(likeCount);
+  document.getElementById('fav-count').textContent = formatCount(favCount);
+
+  // Description
+  const desc = game.description || 'No description available for this game yet.';
+  document.getElementById('game-description').innerHTML = desc.split('\n\n')
+    .map(p => `<p>${p}</p>`).join('');
+
+  // Ratings breakdown
+  document.getElementById('big-rating-num').textContent = avgRating;
+  document.getElementById('big-rating-stars').innerHTML = avgRating !== '—' ? renderStars(parseFloat(avgRating), 18) : '';
+  document.getElementById('big-rating-count').textContent = `${formatCount(reviews.length)} ratings`;
+
+  const counts = [5, 4, 3, 2, 1].map(s => ({
+    star: s,
+    count: reviews.filter(r => r.rating === s).length
+  }));
+  const maxCount = Math.max(...counts.map(c => c.count), 1);
+
+  document.getElementById('rating-bars').innerHTML = counts.map(c => `
+    <div class="rating-bar-row">
+      <span class="rating-bar-label">${c.star}★</span>
+      <div class="rating-bar-track">
+        <div class="rating-bar-fill" style="width:${(c.count / maxCount * 100).toFixed(0)}%"></div>
+      </div>
+      <span class="rating-bar-count">${formatCount(c.count)}</span>
+    </div>
+  `).join('');
+
+  // Game details sidebar
+  const details = [];
+  if (game.developer) details.push(['Developer', game.developer]);
+  if (game.publisher) details.push(['Publisher', game.publisher]);
+  if (game.release_year) details.push(['Released', game.release_year]);
+  if (game.platforms?.length) details.push(['Platforms', game.platforms.slice(0, 3).join(', ')]);
+  if (game.genres?.length) details.push(['Genre', game.genres[0]]);
+  if (game.avg_playtime) details.push(['Avg. Playtime', game.avg_playtime]);
+  if (game.metacritic) {
+    const cls = game.metacritic >= 75 ? 'metacritic-good' : game.metacritic >= 50 ? 'metacritic-ok' : 'metacritic-bad';
+    details.push(['Metacritic', `<span class="${cls}">${game.metacritic}</span>`]);
+  }
+
+  document.getElementById('game-details-list').innerHTML = details.map(([label, val]) => `
+    <div class="detail-row">
+      <span class="detail-label">${label}</span>
+      <span class="detail-value">${val}</span>
+    </div>
+  `).join('');
+
+  // Reviews
+  renderReviews(reviews);
+  document.getElementById('review-count-label').textContent = reviews.length;
+
+  // Show page
+  document.getElementById('game-header').classList.add('visible');
+  document.getElementById('main-layout').style.display = 'grid';
+  hideLoading();
+
+  // Load similar games in background
+  loadSimilarGames(game);
+}
+
+function renderReviews(reviews) {
+  const container = document.getElementById('reviews-container');
+  if (!reviews.length) {
+    container.innerHTML = `<div class="no-reviews">No reviews yet. Be the first to review this game!</div>`;
+    return;
+  }
+
+  container.innerHTML = reviews.map(r => {
+    const initials = (r.username || 'AN').slice(0, 2).toUpperCase();
+    const [c1, c2] = avatarColors(r.username || 'user');
+    return `
+      <div class="review-item">
+        <div class="review-item-header">
+          <div class="reviewer-avatar" style="background:linear-gradient(135deg,${c1},${c2})">${initials}</div>
+          <div class="reviewer-info">
+            <div class="reviewer-name">${r.username || 'Anonymous'}</div>
+            <div class="reviewer-date">${timeAgo(r.created_at)}</div>
+          </div>
+        </div>
+        <div class="review-item-stars">${renderReviewStars(r.rating)}</div>
+        <p class="review-item-text">${r.body}</p>
+        <div class="review-item-footer">
+          <button class="review-action" onclick="toggleReviewLike(this, '${r.id}', ${r.likes})">♥ <span>${formatCount(r.likes)}</span></button>
+          <button class="review-action">💬 <span>0</span></button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function loadSimilarGames(game) {
+  try {
+    if (!game.genres?.length) {
+      document.getElementById('similar-games-list').innerHTML =
+        `<div style="color:var(--muted);font-size:13px">No similar games found.</div>`;
+      return;
+    }
+
+    const { data: similar } = await sb
+      .from('games')
+      .select('id, title, cover_url, genres, release_year, igdb_id')
+      .neq('id', game.id)
+      .contains('genres', [game.genres[0]])
+      .limit(4);
+
+    if (!similar?.length) {
+      document.getElementById('similar-games-list').innerHTML =
+        `<div style="color:var(--muted);font-size:13px">No similar games in database yet.</div>`;
+      return;
+    }
+
+    document.getElementById('similar-games-list').innerHTML = similar.map(g => `
+      <div class="similar-game" onclick="window.location.href='game.html?id=${g.id}'" style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;">
+        <div style="width:36px;aspect-ratio:3/4;border-radius:4px;overflow:hidden;flex-shrink:0;border:1px solid var(--border);background:var(--bg3)">
+          ${g.cover_url ? `<img src="${g.cover_url}" style="width:100%;height:100%;object-fit:cover">` : '🎮'}
+        </div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500;margin-bottom:2px">${g.title}</div>
+          <div style="font-size:11px;color:var(--muted)">${g.genres?.[0] || ''} · ${g.release_year || ''}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('similar-games-list').innerHTML =
+      `<div style="color:var(--muted);font-size:13px">Could not load similar games.</div>`;
+  }
+}
+
+// ── INTERACTIONS ──
+let selectedRating = 0;
+
+document.querySelectorAll('.write-star').forEach(star => {
+  star.addEventListener('mouseover', () => {
+    const val = parseInt(star.dataset.val);
+    document.querySelectorAll('.write-star').forEach(s => {
+      s.classList.toggle('on', parseInt(s.dataset.val) <= val);
+    });
+  });
+  star.addEventListener('mouseleave', () => {
+    document.querySelectorAll('.write-star').forEach(s => {
+      s.classList.toggle('on', parseInt(s.dataset.val) <= selectedRating);
+    });
+  });
+  star.addEventListener('click', () => {
+    selectedRating = parseInt(star.dataset.val);
+  });
+});
+
+document.getElementById('submit-review').addEventListener('click', async () => {
+  const text = document.getElementById('review-text').value.trim();
+  const ta = document.getElementById('review-text');
+
+  if (!text || selectedRating === 0) {
+    ta.style.borderColor = 'rgba(255,100,100,0.4)';
+    setTimeout(() => ta.style.borderColor = '', 1200);
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const gameId = params.get('id');
+
+  const { data, error } = await sb.from('reviews').insert({
+    game_id: parseInt(gameId),
+    username: 'you',
+    rating: selectedRating,
+    body: text,
+    likes: 0
+  }).select().single();
+
+  if (!error && data) {
+    const container = document.getElementById('reviews-container');
+    const noReviews = container.querySelector('.no-reviews');
+    if (noReviews) noReviews.remove();
+
+    const [c1, c2] = avatarColors('you');
+    const newReview = document.createElement('div');
+    newReview.className = 'review-item';
+    newReview.style.cssText = 'opacity:0;transition:opacity 0.4s';
+    newReview.innerHTML = `
+      <div class="review-item-header">
+        <div class="reviewer-avatar" style="background:linear-gradient(135deg,${c1},${c2})">YO</div>
+        <div class="reviewer-info">
+          <div class="reviewer-name">you <span style="font-size:10px;padding:2px 6px;background:rgba(232,200,80,0.1);border:1px solid rgba(232,200,80,0.2);color:#c8a84a;border-radius:3px;margin-left:4px">JUST NOW</span></div>
+          <div class="reviewer-date">Just now</div>
+        </div>
+      </div>
+      <div class="review-item-stars">${renderReviewStars(selectedRating)}</div>
+      <p class="review-item-text">${text}</p>
+      <div class="review-item-footer">
+        <button class="review-action">♥ <span>0</span></button>
+        <button class="review-action">💬 <span>0</span></button>
+      </div>
+    `;
+    container.prepend(newReview);
+    requestAnimationFrame(() => newReview.style.opacity = '1');
+
+    ta.value = '';
+    selectedRating = 0;
+    document.querySelectorAll('.write-star').forEach(s => s.classList.remove('on'));
+  }
+});
+
+async function toggleReviewLike(btn, reviewId, current) {
+  const isLiked = btn.classList.contains('liked');
+  const newCount = isLiked ? current - 1 : current + 1;
+  btn.classList.toggle('liked');
+  btn.querySelector('span').textContent = formatCount(newCount);
+  await sb.from('reviews').update({ likes: newCount }).eq('id', reviewId);
+}
+
+// Action buttons
+const params = new URLSearchParams(window.location.search);
+const gameId = params.get('id');
+
+document.getElementById('btn-log').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-log');
+  const logged = btn.classList.toggle('active');
+  btn.innerHTML = logged ? '🎮 Logged ✓' : '🎮 Log this game';
+  if (gameId) {
+    await sb.from('user_games').upsert({
+      game_id: parseInt(gameId),
+      user_id: null,
+      status: logged ? 'played' : null
+    }, { onConflict: 'game_id,user_id' });
+  }
+});
+
+document.getElementById('btn-like').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-like');
+  const liked = btn.classList.toggle('liked');
+  const countEl = document.getElementById('like-count');
+  const current = parseInt(countEl.textContent.replace(/\D/g,'')) || 0;
+  countEl.textContent = formatCount(liked ? current + 1 : current - 1);
+});
+
+document.getElementById('btn-fav').addEventListener('click', () => {
+  const btn = document.getElementById('btn-fav');
+  btn.classList.toggle('faved');
+  const label = btn.classList.contains('faved') ? '★ Favorited' : '★ Favorite';
+  btn.innerHTML = `${label} <span class="count" id="fav-count">${document.getElementById('fav-count')?.textContent || '—'}</span>`;
+});
+
+document.getElementById('btn-backlog').addEventListener('click', () => {
+  const btn = document.getElementById('btn-backlog');
+  const on = btn.classList.toggle('active');
+  btn.innerHTML = on ? '📋 In Backlog ✓' : '📋 Backlog';
+});
+
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// ── KICK OFF ──
+loadGame();
+</script>
+</body>
+</html>
