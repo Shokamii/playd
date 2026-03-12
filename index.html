@@ -770,12 +770,15 @@
     display: flex;
     align-items: center;
     gap: 16px;
+    position: relative;
+    z-index: 50;
   }
 
   .search-input-wrap {
     flex: 1;
     max-width: 480px;
     position: relative;
+    z-index: 51;
   }
 
   .search-input {
@@ -838,7 +841,7 @@
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 10px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    z-index: 200;
+    z-index: 999;
     overflow: hidden;
     display: none;
   }
