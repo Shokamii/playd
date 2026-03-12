@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playd — Track. Rate. Review.</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0f;
+    --bg2: #131316;
+    --bg3: #1a1a1f;
+    --border: rgba(255,255,255,0.07);
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --muted: #6b6b7a;
+    --card-radius: 10px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    height: 64px;
+    background: rgba(13,13,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .logo span {
+    color: var(--text);
+    opacity: 0.3;
+    font-size: 13px;
+    letter-spacing: 1px;
+    font-family: 'DM Sans', sans-serif;
+    margin-left: 6px;
+    font-weight: 300;
+    vertical-align: middle;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+    align-items: center;
+  }
+
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: color 0.2s;
+    text-transform: uppercase;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-right {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .btn-ghost {
+    padding: 8px 18px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+
+  .btn-accent {
+    padding: 8px 20px;
+    background: var(--accent);
+    border: none;
+    color: #0d0d0f;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: all 0.2s;
+  }
+
+  .btn-accent:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(232,255,71,0.25); }
+
+  /* ── HERO ── */
+  .hero {
+    margin-top: 64px;
+    position: relative;
+    height: 520px;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1a0a2e 0%, #0d0d0f 50%, #0a1a0d 100%);
+  }
+
+  .hero-blur-1 {
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(232,255,71,0.08) 0%, transparent 70%);
+    top: -100px; right: 200px;
+    pointer-events: none;
+  }
+
+  .hero-blur-2 {
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(255,107,53,0.06) 0%, transparent 70%);
+    bottom: 0; left: 100px;
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 0 48px 52px;
+    display: flex;
+    align-items: flex-end;
+    gap: 40px;
+    width: 100%;
+  }
+
+  .hero-cover {
+    width: 130px;
+    height: 175px;
+    border-radius: 8px;
+    background: linear-gradient(145deg, #2a1a5e, #1a3a2e);
+    flex-shrink: 0;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.08);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .hero-cover-inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+  }
+
+  .hero-cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.4));
+  }
+
+  .hero-meta { flex: 1; }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(232,255,71,0.1);
+    border: 1px solid rgba(232,255,71,0.2);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px;
+    line-height: 1;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+
+  .hero-desc {
+    color: var(--muted);
+    font-size: 14px;
+    max-width: 480px;
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  .hero-stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .hero-stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .btn-primary {
+    padding: 10px 24px;
+    background: var(--accent);
+    color: #0d0d0f;
+    border: none;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: all 0.2s;
+  }
+
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(232,255,71,0.3); }
+
+  .btn-outline {
+    padding: 10px 20px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-outline:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  .star-rating {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+  }
+
+  .star { color: var(--accent); font-size: 14px; }
+  .star.half { opacity: 0.5; }
+  .star.empty { opacity: 0.15; }
+
+  .rating-val {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    margin-left: 6px;
+  }
+
+  /* ── SECTION ── */
+  .section {
+    padding: 52px 48px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+
+  .section-title span {
+    color: var(--accent);
+  }
+
+  .see-all {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+  }
+
+  .see-all:hover { color: var(--accent); }
+
+  /* ── TRENDING GAMES ── */
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+  }
+
+  .game-card {
+    cursor: pointer;
+    transition: transform 0.25s;
+  }
+
+  .game-card:hover { transform: translateY(-4px); }
+
+  .game-card:hover .game-cover-overlay {
+    opacity: 1;
+  }
+
+  .game-cover {
+    aspect-ratio: 3/4;
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    border: 1px solid var(--border);
+  }
+
+  .game-cover-bg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+  }
+
+  .game-cover-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(13,13,15,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .overlay-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s;
+    backdrop-filter: blur(4px);
+  }
+
+  .overlay-btn:hover { background: var(--accent); border-color: var(--accent); }
+
+  .game-rank {
+    position: absolute;
+    top: 8px; left: 8px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    color: var(--accent);
+    line-height: 1;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  }
+
+  .game-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .game-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .game-genre {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .game-rating-mini {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  /* ── SPLIT SECTION ── */
+  .split-section {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 32px;
+    padding: 0 48px 52px;
+  }
+
+  /* ── RECENT REVIEWS ── */
+  .reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .review-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 18px 20px;
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 16px;
+    transition: border-color 0.2s;
+    cursor: pointer;
+    margin-bottom: 10px;
+  }
+
+  .review-card:hover { border-color: rgba(255,255,255,0.14); }
+
+  .review-cover {
+    width: 60px;
+    aspect-ratio: 3/4;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+
+  .review-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+
+  .reviewer-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #0d0d0f;
+    flex-shrink: 0;
+  }
+
+  .reviewer-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .review-game-name {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .review-game-name strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .review-stars {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 6px;
+  }
+
+  .rs { font-size: 11px; color: var(--accent); }
+  .rs.e { opacity: 0.15; }
+
+  .review-text {
+    font-size: 13px;
+    color: #9898a8;
+    line-height: 1.65;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .review-footer {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 10px;
+  }
+
+  .review-like {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .review-like:hover { color: #ff6b8a; }
+
+  .review-time {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar-section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .sidebar-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* Activity feed */
+  .activity-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .activity-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .activity-item:first-child { padding-top: 0; }
+
+  .activity-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #0d0d0f;
+  }
+
+  .activity-text {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .activity-text strong { color: var(--text); font-weight: 500; }
+  .activity-text em { color: var(--accent); font-style: normal; }
+
+  .activity-time {
+    font-size: 10px;
+    color: var(--muted);
+    opacity: 0.6;
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* Top genres */
+  .genre-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .genre-pill {
+    padding: 5px 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .genre-pill:hover, .genre-pill.active {
+    background: rgba(232,255,71,0.08);
+    border-color: rgba(232,255,71,0.25);
+    color: var(--accent);
+  }
+
+  /* Popular lists */
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .list-item:hover { opacity: 0.8; }
+  .list-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .list-item:first-child { padding-top: 0; }
+
+  .list-covers {
+    display: flex;
+    gap: -4px;
+  }
+
+  .list-mini-cover {
+    width: 28px; height: 37px;
+    border-radius: 3px;
+    border: 1px solid var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    margin-left: -6px;
+  }
+
+  .list-mini-cover:first-child { margin-left: 0; }
+
+  .list-name {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+
+  .list-meta {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0 48px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 32px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+    margin-top: 20px;
+  }
+
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    opacity: 0.4;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .footer-links a {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--text); }
+
+  .footer-copy {
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.5;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-up {
+    opacity: 0;
+    animation: fadeUp 0.5s ease forwards;
+  }
+
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+  .delay-5 { animation-delay: 0.5s; }
+  .delay-6 { animation-delay: 0.6s; }
+
+  /* ── SEARCH BAR ── */
+  .search-bar-wrap {
+    padding: 20px 48px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .search-input-wrap {
+    flex: 1;
+    max-width: 480px;
+    position: relative;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 10px 16px 10px 40px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-input:focus { border-color: rgba(232,255,71,0.3); }
+  .search-input::placeholder { color: var(--muted); }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 4px;
+  }
+
+  .filter-tab {
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    color: var(--muted);
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .filter-tab:hover { color: var(--text); }
+
+  .filter-tab.active {
+    background: rgba(232,255,71,0.08);
+    border-color: rgba(232,255,71,0.2);
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">Playd<span>beta</span></a>
+  <ul class="nav-links">
+    <li><a href="#" style="color: var(--text);">Discover</a></li>
+    <li><a href="#">Games</a></li>
+    <li><a href="#">Lists</a></li>
+    <li><a href="#">Members</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="btn-ghost">Sign in</button>
+    <button class="btn-accent">Create account</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-blur-1"></div>
+  <div class="hero-blur-2"></div>
+  <div class="hero-content fade-up">
+    <div class="hero-cover">
+      <div class="hero-cover-inner">🌌</div>
+    </div>
+    <div class="hero-meta">
+      <div class="hero-tag">✦ Game of the Week</div>
+      <h1 class="hero-title">Elden Ring</h1>
+      <p class="hero-desc">An open world action RPG set in the Lands Between — a mythological realm with deep lore crafted by Hidetaka Miyazaki and George R.R. Martin.</p>
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-val">
+            <span class="star-rating">
+              <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star half">★</span>
+              <span class="rating-val">4.7</span>
+            </span>
+          </div>
+          <div class="hero-stat-label">avg rating</div>
+        </div>
+        <div>
+          <div class="hero-stat-val">284K</div>
+          <div class="hero-stat-label">players logged</div>
+        </div>
+        <div>
+          <div class="hero-stat-val">41K</div>
+          <div class="hero-stat-label">reviews</div>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn-primary">🎮 Log this game</button>
+        <button class="btn-outline">Read reviews</button>
+        <button class="btn-outline">❤️ Favorite</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SEARCH BAR -->
+<div class="search-bar-wrap fade-up delay-1">
+  <div class="search-input-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" type="text" placeholder="Search games, players, lists...">
+  </div>
+  <div class="filter-tabs">
+    <button class="filter-tab active">All</button>
+    <button class="filter-tab">PC</button>
+    <button class="filter-tab">PlayStation</button>
+    <button class="filter-tab">Xbox</button>
+    <button class="filter-tab">Nintendo</button>
+    <button class="filter-tab">Mobile</button>
+  </div>
+</div>
+
+<!-- TRENDING -->
+<section class="section fade-up delay-2">
+  <div class="section-header">
+    <h2 class="section-title">Trending <span>This Week</span></h2>
+    <a href="#" class="see-all">See all →</a>
+  </div>
+  <div class="games-grid">
+
+    <div class="game-card">
+      <div class="game-cover">
+        <div class="game-cover-bg" style="background: linear-gradient(135deg,#1a0a2e,#3d1a6e)">🌌</div>
+        <div class="game-rank">#1</div>
+        <div class="game-cover-overlay">
+          <div class="overlay-btn" title="Log">🎮</div>
+          <div class="overlay-btn" title="Favorite">❤️</div>
+        </div>
+      </div>
+      <div class="game-title">Elden Ring</div>
+      <div class="game-meta-row">
+        <span class="game-genre">RPG</span>
+        <span class="game-rating-mini">★ 4.7</span>
+      </div>
+    </div>
+
+    <div class="game-card">
+      <div class="game-cover">
+        <div class="game-cover-bg" style="background: linear-gradient(135deg,#0a2a1e,#1e5c3a)">🕵️</div>
+        <div class="game-rank">#2</div>
+        <div class="game-cover-overlay">
+          <div class="overlay-btn">🎮</div>
+          <div class="overlay-btn">❤️</div>
+        </div>
+      </div>
+      <div class="game-title">Alan Wake 2</div>
+      <div class="game-meta-row">
+        <span class="game-genre">Horror</span>
+        <span class="game-rating-mini">★ 4.5</span>
+      </div>
+    </div>
+
+    <div class="game-card">
+      <div class="game-cover">
+        <div class="game-cover-bg" style="background: linear-gradient(135deg,#2e1a0a,#6e3d1a)">🏹</div>
+        <div class="game-rank">#3</div>
+        <div class="game-cover-overlay">
+          <div class="overlay-btn">🎮</div>
+          <div class="overlay-btn">❤️</div>
+        </div>
+      </div>
+      <div class="game-title">Baldur's Gate 3</div>
+      <div class="game-meta-row">
+        <span class="game-genre">RPG</span>
+        <span class="game-rating-mini">★ 4.9</span>
+      </div>
+    </div>
+
+    <div class="game-card">
+      <div class="game-cover">
+        <div class="game-cover-bg" style="background: linear-gradient(135deg,#0a1e2e,#1a4a6e)">🤖</div>
+        <div class="game-rank">#4</div>
+        <div class="game-cover-overlay">
+          <div class="overlay-btn">🎮</div>
+          <div class="overlay-btn">❤️</div>
+        </div>
+      </div>
+      <div class="game-title">Armored Core VI</div>
+      <div class="game-meta-row">
+        <span class="game-genre">Action</span>
+        <span class="game-rating-mini">★ 4.4</span>
+      </div>
+    </div>
+
+    <div class="game-card">
+      <div class="game-cover">
+        <div class="game-cover-bg" style="background: linear-gradient(135deg,#2e0a1e,#6e1a4a)">🗡️</div>
+        <div class="game-rank">#5</div>
+        <div class="game-cover-overlay">
+          <div class="overlay-btn">🎮</div>
+          <div class="overlay-btn">❤️</div>
+        </div>
+      </div>
+      <div class="game-title">Lies of P</div>
+      <div class="game-meta-row">
+        <span class="game-genre">Soulslike</span>
+        <span class="game-rating-mini">★ 4.2</span>
+      </div>
+    </div>
+
+    <div class="game-card">
+      <div class="game-cover">
+        <div class="game-cover-bg" style="background: linear-gradient(135deg,#1e2e0a,#4a6e1a)">🌿</div>
+        <div class="game-rank">#6</div>
+        <div class="game-cover-overlay">
+          <div class="overlay-btn">🎮</div>
+          <div class="overlay-btn">❤️</div>
+        </div>
+      </div>
+      <div class="game-title">Zelda: TotK</div>
+      <div class="game-meta-row">
+        <span class="game-genre">Adventure</span>
+        <span class="game-rating-mini">★ 4.8</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SPLIT: REVIEWS + SIDEBAR -->
+<div class="split-section fade-up delay-3">
+
+  <!-- RECENT REVIEWS -->
+  <div>
+    <div class="section-header" style="margin-bottom: 20px;">
+      <h2 class="section-title">Recent <span>Reviews</span></h2>
+      <a href="#" class="see-all">See all →</a>
+    </div>
+
+    <div class="reviews-list">
+
+      <div class="review-card">
+        <div class="review-cover" style="background: linear-gradient(135deg,#2e1a0a,#6e3d1a)">🏹</div>
+        <div class="review-body">
+          <div class="review-header">
+            <div class="reviewer-avatar">KR</div>
+            <span class="reviewer-name">kaiross_</span>
+            <span class="review-game-name">reviewed <strong>Baldur's Gate 3</strong></span>
+          </div>
+          <div class="review-stars">
+            <span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span>
+          </div>
+          <p class="review-text">This is the kind of game that redefines what the medium is capable of. Every decision feels meaningful, every character feels real. I haven't cared about fictional people this much since Mass Effect 2.</p>
+          <div class="review-footer">
+            <span class="review-like">♥ 142</span>
+            <span class="review-like">💬 18</span>
+            <span class="review-time">2 hours ago</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <div class="review-cover" style="background: linear-gradient(135deg,#1a0a2e,#3d1a6e)">🌌</div>
+        <div class="review-body">
+          <div class="review-header">
+            <div class="reviewer-avatar" style="background: linear-gradient(135deg, #ff6b35, #ff4488)">MX</div>
+            <span class="reviewer-name">mxvoid</span>
+            <span class="review-game-name">reviewed <strong>Elden Ring</strong></span>
+          </div>
+          <div class="review-stars">
+            <span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs e">★</span>
+          </div>
+          <p class="review-text">FromSoftware at their absolute peak. The open world format finally makes the exploration feel earned rather than exhausting. Margit alone is worth the price of admission.</p>
+          <div class="review-footer">
+            <span class="review-like">♥ 97</span>
+            <span class="review-like">💬 9</span>
+            <span class="review-time">5 hours ago</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <div class="review-cover" style="background: linear-gradient(135deg,#0a2a1e,#1e5c3a)">🕵️</div>
+        <div class="review-body">
+          <div class="review-header">
+            <div class="reviewer-avatar" style="background: linear-gradient(135deg, #47ffcc, #47a0ff)">SL</div>
+            <span class="reviewer-name">solarleaf</span>
+            <span class="review-game-name">reviewed <strong>Alan Wake 2</strong></span>
+          </div>
+          <div class="review-stars">
+            <span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span>
+          </div>
+          <p class="review-text">Remedy just made a genuine masterpiece. The live-action sequences shouldn't work but they absolutely do. A love letter to Twin Peaks, Stephen King, and everyone who finished the first game a decade ago.</p>
+          <div class="review-footer">
+            <span class="review-like">♥ 211</span>
+            <span class="review-like">💬 34</span>
+            <span class="review-time">yesterday</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Friend Activity</div>
+
+      <div class="activity-item">
+        <div class="activity-avatar" style="background: linear-gradient(135deg, #e8ff47, #a0cc00)">JK</div>
+        <div>
+          <div class="activity-text"><strong>jake_k</strong> rated <em>Hades II</em> ★★★★½</div>
+          <span class="activity-time">12 min ago</span>
+        </div>
+      </div>
+
+      <div class="activity-item">
+        <div class="activity-avatar" style="background: linear-gradient(135deg, #ff6b35, #ff4488)">NV</div>
+        <div>
+          <div class="activity-text"><strong>nova_x</strong> added <em>Cyberpunk 2077</em> to backlog</div>
+          <span class="activity-time">1 hour ago</span>
+        </div>
+      </div>
+
+      <div class="activity-item">
+        <div class="activity-avatar" style="background: linear-gradient(135deg, #47ffcc, #4488ff)">WR</div>
+        <div>
+          <div class="activity-text"><strong>wrenli</strong> favorited <em>Hollow Knight</em></div>
+          <span class="activity-time">3 hours ago</span>
+        </div>
+      </div>
+
+      <div class="activity-item">
+        <div class="activity-avatar" style="background: linear-gradient(135deg, #cc47ff, #ff47aa)">PL</div>
+        <div>
+          <div class="activity-text"><strong>pluto_d</strong> wrote a review for <em>Disco Elysium</em></div>
+          <span class="activity-time">6 hours ago</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Browse by Genre</div>
+      <div class="genre-pills">
+        <span class="genre-pill active">RPG</span>
+        <span class="genre-pill">Action</span>
+        <span class="genre-pill">Horror</span>
+        <span class="genre-pill">Indie</span>
+        <span class="genre-pill">Strategy</span>
+        <span class="genre-pill">Platformer</span>
+        <span class="genre-pill">Shooter</span>
+        <span class="genre-pill">Sim</span>
+        <span class="genre-pill">Puzzle</span>
+        <span class="genre-pill">Sports</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Popular Lists</div>
+
+      <div class="list-item">
+        <div class="list-covers">
+          <div class="list-mini-cover" style="background: linear-gradient(135deg,#1a0a2e,#3d1a6e)">🌌</div>
+          <div class="list-mini-cover" style="background: linear-gradient(135deg,#2e0a1e,#6e1a4a)">🗡️</div>
+          <div class="list-mini-cover" style="background: linear-gradient(135deg,#0a1e2e,#1a4a6e)">🤖</div>
+        </div>
+        <div class="list-info">
+          <div class="list-name">Best of FromSoftware</div>
+          <div class="list-meta">by <strong style="color:var(--text)">kaiross_</strong> · 8 games</div>
+        </div>
+      </div>
+
+      <div class="list-item">
+        <div class="list-covers">
+          <div class="list-mini-cover" style="background: linear-gradient(135deg,#2e1a0a,#6e3d1a)">🏹</div>
+          <div class="list-mini-cover" style="background: linear-gradient(135deg,#1e2e0a,#4a6e1a)">🌿</div>
+          <div class="list-mini-cover" style="background: linear-gradient(135deg,#0a2a1e,#1e5c3a)">🕵️</div>
+        </div>
+        <div class="list-info">
+          <div class="list-name">Games That Made Me Cry</div>
+          <div class="list-meta">by <strong style="color:var(--text)">solarleaf</strong> · 12 games</div>
+        </div>
+      </div>
+
+      <div class="list-item">
+        <div class="list-covers">
+          <div class="list-mini-cover" style="background: linear-gradient(135deg,#2e0a0a,#6e1a1a)">🔥</div>
+          <div class="list-mini-cover" style="background: linear-gradient(135deg,#0a0a2e,#1a1a6e)">⚡</div>
+          <div class="list-mini-cover" style="background: linear-gradient(135deg,#2a2a0a,#5a5a1a)">💀</div>
+        </div>
+        <div class="list-info">
+          <div class="list-name">Perfect 10s Only</div>
+          <div class="list-meta">by <strong style="color:var(--text)">mxvoid</strong> · 5 games</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Playd</div>
+  <div class="footer-links">
+    <a href="#">About</a>
+    <a href="#">Blog</a>
+    <a href="#">API</a>
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+  </div>
+  <div class="footer-copy">© 2025 Playd. All rights reserved.</div>
+</footer>
+
+<script>
+  // Filter tabs
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  // Genre pills
+  document.querySelectorAll('.genre-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.genre-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+    });
+  });
+
+  // Like interaction
+  document.querySelectorAll('.review-like').forEach(btn => {
+    if (btn.textContent.includes('♥')) {
+      btn.addEventListener('click', () => {
+        const isLiked = btn.style.color === 'rgb(255, 107, 138)';
+        btn.style.color = isLiked ? '' : '#ff6b8a';
+        const num = parseInt(btn.textContent.replace(/\D/g, ''));
+        btn.textContent = `♥ ${isLiked ? num - 1 : num + 1}`;
+      });
+    }
+  });
+
+  // Overlay log button feedback
+  document.querySelectorAll('.overlay-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.style.background = 'var(--accent)';
+      btn.style.borderColor = 'var(--accent)';
+      setTimeout(() => {
+        btn.style.background = '';
+        btn.style.borderColor = '';
+      }, 600);
+    });
+  });
+</script>
+
+</body>
+</html>
