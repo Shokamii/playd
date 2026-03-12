@@ -799,15 +799,10 @@ async function getIGDBToken() {
 }
 
 async function fetchFromIGDB(endpoint, body) {
-  const token = await getIGDBToken();
-  const res = await fetch(`https://api.igdb.com/v4/${endpoint}`, {
+  const res = await fetch('/.netlify/functions/igdb', {
     method: 'POST',
-    headers: {
-      'Client-ID': CONFIG.igdb_client_id,
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'text/plain'
-    },
-    body
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint, body })
   });
   return res.json();
 }
