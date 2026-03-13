@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kaiross_ — Playd</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0f;
+    --bg2: #131316;
+    --bg3: #1a1a1f;
+    --border: rgba(255,255,255,0.07);
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --muted: #6b6b7a;
+    --card-radius: 10px;
+    --user-color: #e8ff47;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    height: 64px;
+    background: rgba(13,13,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: var(--accent); text-decoration: none; }
+  .logo span { color: var(--text); opacity: 0.3; font-size: 13px; letter-spacing: 1px; font-family: 'DM Sans', sans-serif; margin-left: 6px; font-weight: 300; vertical-align: middle; }
+  .nav-links { display: flex; gap: 32px; list-style: none; align-items: center; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 500; letter-spacing: 0.5px; transition: color 0.2s; text-transform: uppercase; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-right { display: flex; gap: 12px; align-items: center; }
+
+  .btn-ghost { padding: 8px 18px; background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s; }
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+  .btn-accent { padding: 8px 20px; background: var(--accent); border: none; color: #0d0d0f; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s; }
+  .btn-accent:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(232,255,71,0.25); }
+
+  /* ── BANNER ── */
+  .profile-banner {
+    margin-top: 64px;
+    height: 220px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0f0f14 0%, #1a1206 50%, #0a0f0a 100%);
+  }
+
+  .banner-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 50%, rgba(232,255,71,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(255,107,53,0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 60% 80%, rgba(72,50,200,0.06) 0%, transparent 50%);
+  }
+
+  /* Decorative grid lines */
+  .banner-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .banner-fade {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 100px;
+    background: linear-gradient(to bottom, transparent, var(--bg));
+  }
+
+  /* User color accent line */
+  .banner-accent-line {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--user-color), transparent);
+    opacity: 0.4;
+  }
+
+  /* ── PROFILE HEADER ── */
+  .profile-header {
+    position: relative;
+    padding: 0 48px;
+    margin-top: -60px;
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    margin-bottom: 32px;
+    z-index: 2;
+  }
+
+  .profile-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .profile-avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #a0cc00);
+    border: 4px solid var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    color: #0d0d0f;
+    letter-spacing: 2px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    position: relative;
+    z-index: 2;
+  }
+
+  .profile-avatar-ring {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 1px solid rgba(232,255,71,0.2);
+    z-index: 1;
+  }
+
+  .online-dot {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #4cdb6e;
+    border: 3px solid var(--bg);
+    z-index: 3;
+  }
+
+  .profile-info {
+    flex: 1;
+    padding-bottom: 8px;
+  }
+
+  .profile-username {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .profile-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    background: rgba(232,255,71,0.1);
+    border: 1px solid rgba(232,255,71,0.25);
+    color: var(--accent);
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .profile-bio {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    max-width: 480px;
+    line-height: 1.6;
+  }
+
+  .profile-meta {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .profile-meta-item {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .profile-meta-item strong { color: var(--text); font-weight: 500; }
+
+  .profile-actions {
+    display: flex;
+    gap: 10px;
+    padding-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  .btn-follow {
+    padding: 9px 24px;
+    background: var(--accent);
+    color: #0d0d0f;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-follow:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,255,71,0.25); }
+  .btn-follow.following { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+
+  .btn-message {
+    padding: 9px 18px;
+    background: var(--bg3);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-message:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+  /* ── STATS STRIP ── */
+  .stats-strip {
+    margin: 0 48px 32px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    overflow: hidden;
+  }
+
+  .stat-block {
+    padding: 20px 24px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+    transition: background 0.2s;
+    cursor: default;
+  }
+  .stat-block:last-child { border-right: none; }
+  .stat-block:hover { background: var(--bg3); }
+
+  .stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    line-height: 1;
+    color: var(--text);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .stat-val.accent { color: var(--accent); }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 28px;
+    padding: 0 48px 60px;
+  }
+
+  /* ── SECTIONS ── */
+  .profile-section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-head-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+  }
+
+  .section-head-link {
+    font-size: 11px;
+    color: var(--muted);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+  }
+  .section-head-link:hover { color: var(--accent); }
+
+  /* ── FAVORITE GAMES ── */
+  .favorites-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .fav-game {
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .fav-game:hover { transform: translateY(-4px); }
+
+  .fav-cover {
+    aspect-ratio: 3/4;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    margin-bottom: 8px;
+  }
+
+  .fav-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .fav-cover-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+  }
+
+  .fav-cover-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: flex-end;
+    padding: 10px;
+  }
+
+  .fav-game:hover .fav-cover-overlay { opacity: 1; }
+
+  .fav-cover-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .fav-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+  }
+
+  /* ── RECENTLY PLAYED ── */
+  .recent-list { display: flex; flex-direction: column; gap: 2px; }
+
+  .recent-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-decoration: none;
+  }
+  .recent-item:hover { background: var(--bg3); }
+
+  .recent-cover {
+    width: 44px;
+    height: 58px;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  .recent-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+  .recent-info { flex: 1; min-width: 0; }
+
+  .recent-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+  }
+
+  .recent-meta { font-size: 12px; color: var(--muted); }
+
+  .recent-right { text-align: right; flex-shrink: 0; }
+
+  .recent-stars { display: flex; gap: 2px; justify-content: flex-end; margin-bottom: 3px; }
+  .rs { font-size: 11px; color: #c8a84a; }
+  .rs.e { opacity: 0.15; }
+
+  .recent-status {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .status-played { background: rgba(76,219,110,0.1); color: #4cdb6e; }
+  .status-playing { background: rgba(232,255,71,0.1); color: var(--accent); }
+  .status-backlog { background: rgba(107,107,122,0.15); color: var(--muted); }
+
+  /* ── REVIEWS ── */
+  .review-item {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 14px;
+  }
+  .review-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .review-item:first-child { padding-top: 0; }
+
+  .review-game-cover {
+    width: 52px;
+    height: 68px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .review-game-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+  .review-game-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .review-game-name span { color: var(--muted); font-weight: 400; font-size: 11px; margin-left: 6px; }
+
+  .review-stars-row { display: flex; gap: 2px; margin-bottom: 8px; }
+  .rstar { font-size: 12px; color: #c8a84a; }
+  .rstar.e { opacity: 0.15; }
+
+  .review-text {
+    font-size: 13px;
+    color: #9898a8;
+    line-height: 1.7;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .review-footer-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .review-like-btn {
+    font-size: 12px;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: color 0.15s;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .review-like-btn:hover { color: #ff6b8a; }
+  .review-like-btn.liked { color: #ff6b8a; }
+  .review-date { font-size: 11px; color: var(--muted); margin-left: auto; }
+
+  /* ── LISTS ── */
+  .lists-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .list-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .list-card:hover { border-color: rgba(255,255,255,0.14); transform: translateY(-2px); }
+
+  .list-card-covers {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .list-mini-cover {
+    width: 32px;
+    height: 42px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .list-mini-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+  .list-card-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .list-card-meta { font-size: 11px; color: var(--muted); }
+
+  /* ── SIDEBAR ── */
+  .sidebar-widget {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .widget-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Genre breakdown */
+  .genre-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 12px;
+  }
+  .genre-bar-row:last-child { margin-bottom: 0; }
+
+  .genre-bar-label { width: 72px; color: var(--muted); flex-shrink: 0; font-size: 11px; }
+
+  .genre-bar-track {
+    flex: 1;
+    height: 4px;
+    background: var(--bg3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .genre-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--accent);
+    transition: width 1s ease;
+  }
+
+  .genre-bar-count { font-size: 11px; color: var(--muted); width: 24px; text-align: right; flex-shrink: 0; }
+
+  /* Followers list */
+  .follower-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .follower-item:hover { opacity: 0.8; }
+  .follower-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .follower-item:first-child { padding-top: 0; }
+
+  .follower-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #0d0d0f;
+    flex-shrink: 0;
+  }
+
+  .follower-name { font-size: 13px; font-weight: 500; flex: 1; }
+  .follower-games { font-size: 11px; color: var(--muted); }
+
+  /* Rating distribution mini */
+  .rating-dist {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 48px;
+    margin-bottom: 10px;
+  }
+
+  .rating-dist-bar {
+    flex: 1;
+    background: rgba(200,168,74,0.2);
+    border-radius: 2px 2px 0 0;
+    position: relative;
+    transition: background 0.2s;
+    cursor: default;
+  }
+  .rating-dist-bar:hover { background: rgba(200,168,74,0.4); }
+
+  .rating-dist-labels {
+    display: flex;
+    gap: 4px;
+    justify-content: space-between;
+  }
+  .rating-dist-label { flex: 1; text-align: center; font-size: 9px; color: var(--muted); }
+
+  .avg-rating-display {
+    text-align: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .avg-rating-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    color: #c8a84a;
+    line-height: 1;
+  }
+
+  .avg-rating-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ── PROFILE TABS ── */
+  .profile-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 0 48px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .profile-tab {
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+    margin-bottom: -1px;
+  }
+  .profile-tab:hover { color: var(--text); }
+  .profile-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-up { opacity: 0; animation: fadeUp 0.5s ease forwards; }
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+
+  /* ── FOOTER ── */
+  footer { padding: 28px 48px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); }
+  .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; color: var(--accent); opacity: 0.4; }
+  .footer-copy { font-size: 11px; color: var(--muted); opacity: 0.5; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo">Playd<span>beta</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Discover</a></li>
+    <li><a href="#">Games</a></li>
+    <li><a href="#">Lists</a></li>
+    <li><a href="#">Members</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="btn-ghost">Sign in</button>
+    <button class="btn-accent">Create account</button>
+  </div>
+</nav>
+
+<!-- BANNER -->
+<div class="profile-banner">
+  <div class="banner-bg"></div>
+  <div class="banner-grid"></div>
+  <div class="banner-fade"></div>
+  <div class="banner-accent-line"></div>
+</div>
+
+<!-- PROFILE HEADER -->
+<div class="profile-header fade-up">
+  <div class="profile-avatar-wrap">
+    <div class="profile-avatar-ring"></div>
+    <div class="profile-avatar">KR</div>
+    <div class="online-dot"></div>
+  </div>
+  <div class="profile-info">
+    <div class="profile-username">
+      kaiross_
+      <span class="profile-badge">TOP CRITIC</span>
+    </div>
+    <div class="profile-bio">RPG purist. Souls enjoyer. If it doesn't have a dodge roll I'm not interested. Currently buried in my backlog and loving it.</div>
+    <div class="profile-meta">
+      <span class="profile-meta-item">📍 <strong>Tokyo, Japan</strong></span>
+      <span class="profile-meta-item">📅 Joined <strong>March 2023</strong></span>
+      <span class="profile-meta-item">👥 <strong>284</strong> followers</span>
+      <span class="profile-meta-item">following <strong>91</strong></span>
+    </div>
+  </div>
+  <div class="profile-actions">
+    <button class="btn-follow" id="follow-btn" onclick="toggleFollow()">+ Follow</button>
+    <button class="btn-message">✉ Message</button>
+  </div>
+</div>
+
+<!-- STATS STRIP -->
+<div class="stats-strip fade-up delay-1">
+  <div class="stat-block">
+    <div class="stat-val accent">312</div>
+    <div class="stat-label">Games Played</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-val">4.1</div>
+    <div class="stat-label">Avg Rating</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-val">87</div>
+    <div class="stat-label">Reviews</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-val">14</div>
+    <div class="stat-label">Lists</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-val">RPG</div>
+    <div class="stat-label">Top Genre</div>
+  </div>
+</div>
+
+<!-- PROFILE TABS -->
+<div class="profile-tabs fade-up delay-2">
+  <button class="profile-tab active" data-tab="overview">Overview</button>
+  <button class="profile-tab" data-tab="games">Games</button>
+  <button class="profile-tab" data-tab="reviews">Reviews</button>
+  <button class="profile-tab" data-tab="lists">Lists</button>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="main-layout fade-up delay-3">
+
+  <!-- LEFT COLUMN -->
+  <div>
+
+    <!-- FAVORITE GAMES -->
+    <div class="profile-section">
+      <div class="section-head">
+        <span class="section-head-title">Favorite Games</span>
+        <a href="#" class="section-head-link">Edit ✎</a>
+      </div>
+      <div class="favorites-grid">
+
+        <div class="fav-game" onclick="window.location.href='game.html?igdb=119133'">
+          <div class="fav-cover" style="background:linear-gradient(135deg,#1a0a2e,#3d1a6e)">
+            <div class="fav-cover-placeholder" id="fav-cover-0">🌌</div>
+            <div class="fav-cover-overlay"><div class="fav-cover-title">Elden Ring</div></div>
+          </div>
+          <div class="fav-title">Elden Ring</div>
+        </div>
+
+        <div class="fav-game" onclick="window.location.href='game.html?igdb=119171'">
+          <div class="fav-cover" style="background:linear-gradient(135deg,#2e1a0a,#6e3d1a)">
+            <div class="fav-cover-placeholder" id="fav-cover-1">🏹</div>
+            <div class="fav-cover-overlay"><div class="fav-cover-title">Baldur's Gate 3</div></div>
+          </div>
+          <div class="fav-title">Baldur's Gate 3</div>
+        </div>
+
+        <div class="fav-game" onclick="window.location.href='game.html?igdb=1020'">
+          <div class="fav-cover" style="background:linear-gradient(135deg,#0a1a2e,#1a3a5e)">
+            <div class="fav-cover-placeholder" id="fav-cover-2">⚔️</div>
+            <div class="fav-cover-overlay"><div class="fav-cover-title">Dark Souls III</div></div>
+          </div>
+          <div class="fav-title">Dark Souls III</div>
+        </div>
+
+        <div class="fav-game" onclick="window.location.href='game.html?igdb=28036'">
+          <div class="fav-cover" style="background:linear-gradient(135deg,#1a2e0a,#3a5e1a)">
+            <div class="fav-cover-placeholder" id="fav-cover-3">🦋</div>
+            <div class="fav-cover-overlay"><div class="fav-cover-title">Hollow Knight</div></div>
+          </div>
+          <div class="fav-title">Hollow Knight</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RECENTLY PLAYED -->
+    <div class="profile-section">
+      <div class="section-head">
+        <span class="section-head-title">Recently Played</span>
+        <a href="#" class="section-head-link">See all →</a>
+      </div>
+      <div class="recent-list">
+
+        <div class="recent-item" onclick="window.location.href='game.html?igdb=119133'">
+          <div class="recent-cover" id="recent-cover-0">🌌</div>
+          <div class="recent-info">
+            <div class="recent-title">Elden Ring</div>
+            <div class="recent-meta">RPG · FromSoftware · 2022</div>
+          </div>
+          <div class="recent-right">
+            <div class="recent-stars">
+              <span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span>
+            </div>
+            <span class="recent-status status-played">Played</span>
+          </div>
+        </div>
+
+        <div class="recent-item" onclick="window.location.href='game.html?igdb=185246'">
+          <div class="recent-cover" id="recent-cover-1">🕵️</div>
+          <div class="recent-info">
+            <div class="recent-title">Alan Wake 2</div>
+            <div class="recent-meta">Horror · Remedy · 2023</div>
+          </div>
+          <div class="recent-right">
+            <div class="recent-stars">
+              <span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span>
+            </div>
+            <span class="recent-status status-playing">Playing</span>
+          </div>
+        </div>
+
+        <div class="recent-item" onclick="window.location.href='game.html?igdb=148241'">
+          <div class="recent-cover" id="recent-cover-2">🗡️</div>
+          <div class="recent-info">
+            <div class="recent-title">Lies of P</div>
+            <div class="recent-meta">Soulslike · Round8 · 2023</div>
+          </div>
+          <div class="recent-right">
+            <div class="recent-stars">
+              <span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs e">★</span>
+            </div>
+            <span class="recent-status status-played">Played</span>
+          </div>
+        </div>
+
+        <div class="recent-item" onclick="window.location.href='game.html?igdb=119388'">
+          <div class="recent-cover" id="recent-cover-3">🌿</div>
+          <div class="recent-info">
+            <div class="recent-title">Zelda: Tears of the Kingdom</div>
+            <div class="recent-meta">Adventure · Nintendo · 2023</div>
+          </div>
+          <div class="recent-right">
+            <div class="recent-stars">
+              <span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs e">★</span>
+            </div>
+            <span class="recent-status status-backlog">Backlog</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div class="profile-section">
+      <div class="section-head">
+        <span class="section-head-title">Recent Reviews</span>
+        <a href="#" class="section-head-link">See all 87 →</a>
+      </div>
+
+      <div class="review-item">
+        <div class="review-game-cover" id="review-cover-0">🌌</div>
+        <div class="review-body">
+          <div class="review-game-name">Elden Ring <span>2022</span></div>
+          <div class="review-stars-row">
+            <span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span>
+          </div>
+          <p class="review-text">FromSoftware didn't just make their best game — they made one of the greatest games ever created. The open world could have diluted the signature tension, but instead it amplifies it.</p>
+          <div class="review-footer-row">
+            <button class="review-like-btn" onclick="toggleLike(this)">♥ <span>847</span></button>
+            <span class="review-date">March 4, 2024</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="review-item">
+        <div class="review-game-cover" id="review-cover-1">🕵️</div>
+        <div class="review-body">
+          <div class="review-game-name">Alan Wake 2 <span>2023</span></div>
+          <div class="review-stars-row">
+            <span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span>
+          </div>
+          <p class="review-text">Remedy just made a genuine masterpiece. The live-action sequences shouldn't work but they absolutely do. A love letter to Twin Peaks and everyone who finished the first game a decade ago.</p>
+          <div class="review-footer-row">
+            <button class="review-like-btn" onclick="toggleLike(this)">♥ <span>412</span></button>
+            <span class="review-date">January 12, 2024</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="review-item">
+        <div class="review-game-cover" id="review-cover-2">🏹</div>
+        <div class="review-body">
+          <div class="review-game-name">Baldur's Gate 3 <span>2023</span></div>
+          <div class="review-stars-row">
+            <span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span>
+          </div>
+          <p class="review-text">This is the kind of game that redefines what the medium is capable of. Every decision feels meaningful. I haven't cared about fictional people this much since Mass Effect 2.</p>
+          <div class="review-footer-row">
+            <button class="review-like-btn" onclick="toggleLike(this)">♥ <span>298</span></button>
+            <span class="review-date">November 2, 2023</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- LISTS -->
+    <div class="profile-section">
+      <div class="section-head">
+        <span class="section-head-title">Game Lists</span>
+        <a href="#" class="section-head-link">See all 14 →</a>
+      </div>
+      <div class="lists-grid">
+
+        <div class="list-card">
+          <div class="list-card-covers">
+            <div class="list-mini-cover" id="list-cover-0-0" style="background:linear-gradient(135deg,#1a0a2e,#3d1a6e)">🌌</div>
+            <div class="list-mini-cover" id="list-cover-0-1" style="background:linear-gradient(135deg,#1a0a1e,#3d1a6e)">⚔️</div>
+            <div class="list-mini-cover" id="list-cover-0-2" style="background:linear-gradient(135deg,#0a1a2e,#1a3a5e)">🗡️</div>
+          </div>
+          <div class="list-card-name">Best of FromSoftware</div>
+          <div class="list-card-meta">8 games · 142 likes</div>
+        </div>
+
+        <div class="list-card">
+          <div class="list-card-covers">
+            <div class="list-mini-cover" id="list-cover-1-0" style="background:linear-gradient(135deg,#2e1a0a,#6e3d1a)">🏹</div>
+            <div class="list-mini-cover" id="list-cover-1-1" style="background:linear-gradient(135deg,#1a2e0a,#3a5e1a)">🦋</div>
+            <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e0a2e,#6e1a6e)">👁️</div>
+          </div>
+          <div class="list-card-name">Games That Made Me Cry</div>
+          <div class="list-card-meta">12 games · 89 likes</div>
+        </div>
+
+        <div class="list-card">
+          <div class="list-card-covers">
+            <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e2a0a,#6e5a1a)">🔥</div>
+            <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a2a2e,#1a5a6e)">⚡</div>
+            <div class="list-mini-cover" style="background:linear-gradient(135deg,#2a0a2e,#5a1a6e)">💀</div>
+          </div>
+          <div class="list-card-name">Perfect 10s Only</div>
+          <div class="list-card-meta">5 games · 211 likes</div>
+        </div>
+
+        <div class="list-card">
+          <div class="list-card-covers">
+            <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a2e1e,#1a6e4e)">🌿</div>
+            <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e1e0a,#6e4e1a)">🏰</div>
+            <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a1e2e,#1a4e6e)">🌊</div>
+          </div>
+          <div class="list-card-name">Cozy Weekend Games</div>
+          <div class="list-card-meta">9 games · 67 likes</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SIDEBAR -->
+  <div>
+
+    <!-- RATING DISTRIBUTION -->
+    <div class="sidebar-widget">
+      <div class="widget-title">Rating Distribution</div>
+      <div class="rating-dist">
+        <div class="rating-dist-bar" style="height:20%" title="1★"></div>
+        <div class="rating-dist-bar" style="height:15%" title="1.5★"></div>
+        <div class="rating-dist-bar" style="height:22%" title="2★"></div>
+        <div class="rating-dist-bar" style="height:18%" title="2.5★"></div>
+        <div class="rating-dist-bar" style="height:35%" title="3★"></div>
+        <div class="rating-dist-bar" style="height:42%" title="3.5★"></div>
+        <div class="rating-dist-bar" style="height:65%" title="4★"></div>
+        <div class="rating-dist-bar" style="height:80%" title="4.5★"></div>
+        <div class="rating-dist-bar" style="height:100%" title="5★"></div>
+      </div>
+      <div class="rating-dist-labels">
+        <span class="rating-dist-label">1</span>
+        <span class="rating-dist-label">2</span>
+        <span class="rating-dist-label">3</span>
+        <span class="rating-dist-label">4</span>
+        <span class="rating-dist-label">5</span>
+      </div>
+      <div class="avg-rating-display">
+        <div class="avg-rating-num">4.1</div>
+        <div class="avg-rating-label">Average Rating</div>
+      </div>
+    </div>
+
+    <!-- GENRE BREAKDOWN -->
+    <div class="sidebar-widget">
+      <div class="widget-title">Top Genres</div>
+      <div class="genre-bar-row">
+        <span class="genre-bar-label">RPG</span>
+        <div class="genre-bar-track"><div class="genre-bar-fill" style="width:82%"></div></div>
+        <span class="genre-bar-count">94</span>
+      </div>
+      <div class="genre-bar-row">
+        <span class="genre-bar-label">Action</span>
+        <div class="genre-bar-track"><div class="genre-bar-fill" style="width:64%;background:#ff6b35"></div></div>
+        <span class="genre-bar-count">73</span>
+      </div>
+      <div class="genre-bar-row">
+        <span class="genre-bar-label">Indie</span>
+        <div class="genre-bar-track"><div class="genre-bar-fill" style="width:48%;background:#47ffcc"></div></div>
+        <span class="genre-bar-count">55</span>
+      </div>
+      <div class="genre-bar-row">
+        <span class="genre-bar-label">Adventure</span>
+        <div class="genre-bar-track"><div class="genre-bar-fill" style="width:34%;background:#cc47ff"></div></div>
+        <span class="genre-bar-count">39</span>
+      </div>
+      <div class="genre-bar-row">
+        <span class="genre-bar-label">Strategy</span>
+        <div class="genre-bar-track"><div class="genre-bar-fill" style="width:22%;background:#ff47aa"></div></div>
+        <span class="genre-bar-count">25</span>
+      </div>
+    </div>
+
+    <!-- FOLLOWERS -->
+    <div class="sidebar-widget">
+      <div class="widget-title">Followers</div>
+
+      <div class="follower-item">
+        <div class="follower-avatar" style="background:linear-gradient(135deg,#ff6b35,#ff4488)">MX</div>
+        <div>
+          <div class="follower-name">mxvoid</div>
+          <div class="follower-games">218 games</div>
+        </div>
+      </div>
+
+      <div class="follower-item">
+        <div class="follower-avatar" style="background:linear-gradient(135deg,#47ffcc,#4488ff)">SL</div>
+        <div>
+          <div class="follower-name">solarleaf</div>
+          <div class="follower-games">401 games</div>
+        </div>
+      </div>
+
+      <div class="follower-item">
+        <div class="follower-avatar" style="background:linear-gradient(135deg,#cc47ff,#ff47aa)">PL</div>
+        <div>
+          <div class="follower-name">pluto_d</div>
+          <div class="follower-games">167 games</div>
+        </div>
+      </div>
+
+      <div class="follower-item">
+        <div class="follower-avatar" style="background:linear-gradient(135deg,#ffcc47,#ff8847)">TK</div>
+        <div>
+          <div class="follower-name">tako_gg</div>
+          <div class="follower-games">89 games</div>
+        </div>
+      </div>
+
+      <a href="#" style="display:block;text-align:center;font-size:12px;color:var(--muted);margin-top:14px;text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">See all 284 followers →</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Playd</div>
+  <div class="footer-copy">© 2025 Playd. All rights reserved.</div>
+</footer>
+
+<script>
+  // ── LOAD COVERS ──
+  const COVER_IDS = {
+    fav: [119133, 119171, 11133, 28036],
+    recent: [119133, 185246, 148241, 119388],
+    review: [119133, 185246, 119171]
+  };
+
+  async function loadProfileCovers() {
+    const allIds = [...new Set([...COVER_IDS.fav, ...COVER_IDS.recent, ...COVER_IDS.review])];
+
+    try {
+      const res = await fetch('/.netlify/functions/igdb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpoint: 'games',
+          body: `fields id, cover.url; where id = (${allIds.join(',')}); limit ${allIds.length};`
+        })
+      });
+
+      const games = await res.json();
+      const coverMap = {};
+      games.forEach(g => {
+        if (g.cover?.url) coverMap[g.id] = 'https:' + g.cover.url.replace('t_thumb', 't_cover_big');
+      });
+
+      // Inject favorite covers
+      COVER_IDS.fav.forEach((id, i) => {
+        const el = document.getElementById(`fav-cover-${i}`);
+        if (el && coverMap[id]) {
+          el.innerHTML = `<img src="${coverMap[id]}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">`;
+          el.style.fontSize = '0';
+        }
+      });
+
+      // Inject recent covers
+      COVER_IDS.recent.forEach((id, i) => {
+        const el = document.getElementById(`recent-cover-${i}`);
+        if (el && coverMap[id]) {
+          el.innerHTML = `<img src="${coverMap[id]}" alt="">`;
+        }
+      });
+
+      // Inject review covers
+      COVER_IDS.review.forEach((id, i) => {
+        const el = document.getElementById(`review-cover-${i}`);
+        if (el && coverMap[id]) {
+          el.innerHTML = `<img src="${coverMap[id]}" alt="">`;
+          el.style.fontSize = '0';
+        }
+      });
+
+    } catch (e) {
+      console.warn('Could not load covers:', e);
+    }
+  }
+
+  loadProfileCovers();
+
+  // ── FOLLOW BUTTON ──
+  function toggleFollow() {
+    const btn = document.getElementById('follow-btn');
+    const following = btn.classList.toggle('following');
+    btn.textContent = following ? '✓ Following' : '+ Follow';
+  }
+
+  // ── LIKE REVIEWS ──
+  function toggleLike(btn) {
+    const liked = btn.classList.toggle('liked');
+    const span = btn.querySelector('span');
+    const count = parseInt(span.textContent);
+    span.textContent = liked ? count + 1 : count - 1;
+  }
+
+  // ── PROFILE TABS ──
+  document.querySelectorAll('.profile-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
