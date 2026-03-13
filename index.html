@@ -376,6 +376,23 @@
     align-items: center;
     justify-content: center;
     font-size: 40px;
+    position: relative;
+  }
+
+  .game-cover-bg img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+  }
+
+  .hero-cover-inner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   .game-cover-overlay {
@@ -959,7 +976,9 @@
   <div class="hero-blur-2"></div>
   <div class="hero-content fade-up">
     <div class="hero-cover">
-      <div class="hero-cover-inner">🌌</div>
+      <div class="hero-cover-inner" id="hero-cover-inner">
+        <div style="width:100%;height:100%;background:linear-gradient(145deg,#2a1a00,#1a0a00);display:flex;align-items:center;justify-content:center;font-size:52px">🌌</div>
+      </div>
     </div>
     <div class="hero-meta">
       <div class="hero-tag">✦ Game of the Week</div>
@@ -985,8 +1004,8 @@
         </div>
       </div>
       <div class="hero-actions">
-        <button class="btn-primary" onclick="window.location.href='game.html?igdb=1942'">🎮 Log this game</button>
-        <button class="btn-outline" onclick="window.location.href='game.html?igdb=1942'">Read reviews</button>
+        <button class="btn-primary" onclick="window.location.href='game.html?igdb=119133'">🎮 Log this game</button>
+        <button class="btn-outline" onclick="window.location.href='game.html?igdb=119133'">Read reviews</button>
         <button class="btn-outline">❤️ Favorite</button>
       </div>
     </div>
@@ -1016,11 +1035,11 @@
     <h2 class="section-title">Trending <span>This Week</span></h2>
     <a href="#" class="see-all">See all →</a>
   </div>
-  <div class="games-grid">
+  <div class="games-grid" id="trending-grid">
 
-    <div class="game-card" onclick="window.location.href='game.html?igdb=1942'" style="cursor:pointer">
+    <div class="game-card" data-igdb="119133" data-rank="1" data-genre="RPG" data-rating="4.7" onclick="window.location.href='game.html?igdb=119133'">
       <div class="game-cover">
-        <div class="game-cover-bg" style="background: linear-gradient(135deg,#1a0a2e,#3d1a6e)">🌌</div>
+        <div class="game-cover-bg" style="background:linear-gradient(135deg,#1a0a2e,#3d1a6e)"></div>
         <div class="game-rank">#1</div>
         <div class="game-cover-overlay">
           <div class="overlay-btn" title="Log">🎮</div>
@@ -1034,9 +1053,9 @@
       </div>
     </div>
 
-    <div class="game-card">
+    <div class="game-card" data-igdb="209182" data-rank="2" data-genre="Horror" data-rating="4.5" onclick="window.location.href='game.html?igdb=209182'">
       <div class="game-cover">
-        <div class="game-cover-bg" style="background: linear-gradient(135deg,#0a2a1e,#1e5c3a)">🕵️</div>
+        <div class="game-cover-bg" style="background:linear-gradient(135deg,#0a2a1e,#1e5c3a)"></div>
         <div class="game-rank">#2</div>
         <div class="game-cover-overlay">
           <div class="overlay-btn">🎮</div>
@@ -1050,9 +1069,9 @@
       </div>
     </div>
 
-    <div class="game-card">
+    <div class="game-card" data-igdb="119171" data-rank="3" data-genre="RPG" data-rating="4.9" onclick="window.location.href='game.html?igdb=119171'">
       <div class="game-cover">
-        <div class="game-cover-bg" style="background: linear-gradient(135deg,#2e1a0a,#6e3d1a)">🏹</div>
+        <div class="game-cover-bg" style="background:linear-gradient(135deg,#2e1a0a,#6e3d1a)"></div>
         <div class="game-rank">#3</div>
         <div class="game-cover-overlay">
           <div class="overlay-btn">🎮</div>
@@ -1066,9 +1085,9 @@
       </div>
     </div>
 
-    <div class="game-card">
+    <div class="game-card" data-igdb="252647" data-rank="4" data-genre="Action" data-rating="4.4" onclick="window.location.href='game.html?igdb=252647'">
       <div class="game-cover">
-        <div class="game-cover-bg" style="background: linear-gradient(135deg,#0a1e2e,#1a4a6e)">🤖</div>
+        <div class="game-cover-bg" style="background:linear-gradient(135deg,#0a1e2e,#1a4a6e)"></div>
         <div class="game-rank">#4</div>
         <div class="game-cover-overlay">
           <div class="overlay-btn">🎮</div>
@@ -1082,9 +1101,9 @@
       </div>
     </div>
 
-    <div class="game-card">
+    <div class="game-card" data-igdb="196639" data-rank="5" data-genre="Soulslike" data-rating="4.2" onclick="window.location.href='game.html?igdb=196639'">
       <div class="game-cover">
-        <div class="game-cover-bg" style="background: linear-gradient(135deg,#2e0a1e,#6e1a4a)">🗡️</div>
+        <div class="game-cover-bg" style="background:linear-gradient(135deg,#2e0a1e,#6e1a4a)"></div>
         <div class="game-rank">#5</div>
         <div class="game-cover-overlay">
           <div class="overlay-btn">🎮</div>
@@ -1098,9 +1117,9 @@
       </div>
     </div>
 
-    <div class="game-card">
+    <div class="game-card" data-igdb="119388" data-rank="6" data-genre="Adventure" data-rating="4.8" onclick="window.location.href='game.html?igdb=119388'">
       <div class="game-cover">
-        <div class="game-cover-bg" style="background: linear-gradient(135deg,#1e2e0a,#4a6e1a)">🌿</div>
+        <div class="game-cover-bg" style="background:linear-gradient(135deg,#1e2e0a,#4a6e1a)"></div>
         <div class="game-rank">#6</div>
         <div class="game-cover-overlay">
           <div class="overlay-btn">🎮</div>
@@ -1308,7 +1327,61 @@
 </footer>
 
 <script>
-  // ── FILTER TABS ──
+  // ── LOAD COVERS ON PAGE START ──
+  // All trending + hero IDs in one single IGDB request
+  const TRENDING_IDS = [119133, 209182, 119171, 252647, 196639, 119388];
+  const HERO_IGDB_ID = 119133;
+
+  async function loadCovers() {
+    try {
+      const res = await fetch('/.netlify/functions/igdb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpoint: 'games',
+          body: `fields id, cover.url; where id = (${TRENDING_IDS.join(',')}); limit ${TRENDING_IDS.length};`
+        })
+      });
+
+      const games = await res.json();
+      if (!games || !games.length) return;
+
+      // Build a quick lookup map: igdb_id → cover_url
+      const coverMap = {};
+      games.forEach(g => {
+        if (g.cover?.url) {
+          coverMap[g.id] = 'https:' + g.cover.url.replace('t_thumb', 't_cover_big');
+        }
+      });
+
+      // ── Inject into trending cards ──
+      document.querySelectorAll('.game-card[data-igdb]').forEach(card => {
+        const igdbId = parseInt(card.dataset.igdb);
+        const url = coverMap[igdbId];
+        if (!url) return;
+        const bg = card.querySelector('.game-cover-bg');
+        if (bg) {
+          bg.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
+          bg.style.background = 'none';
+        }
+      });
+
+      // ── Inject into hero ──
+      const heroUrl = coverMap[HERO_IGDB_ID];
+      if (heroUrl) {
+        const heroCover = document.getElementById('hero-cover-inner');
+        if (heroCover) {
+          heroCover.innerHTML = `<img src="${heroUrl}" alt="Elden Ring">`;
+        }
+      }
+
+    } catch (e) {
+      console.warn('Could not load covers:', e);
+      // Graceful fallback — cards already have gradient backgrounds
+    }
+  }
+
+  loadCovers();
   let activePlatform = '';
 
   document.querySelectorAll('.filter-tab').forEach(tab => {
