@@ -88,6 +88,7 @@
     border: 1px solid rgba(255,255,255,0.06);
     box-shadow: 0 12px 40px rgba(0,0,0,0.6);
     background: var(--bg3);
+    will-change: transform;
   }
 
   .sc-cover img {
@@ -96,6 +97,17 @@
     display: block;
     opacity: 0.65;
   }
+
+  @keyframes float0 { 0%,100%{transform:rotate(-4deg) translate(0,0)}   50%{transform:rotate(-3deg) translate(4px,-10px)} }
+  @keyframes float1 { 0%,100%{transform:rotate(3deg) translate(0,0)}    50%{transform:rotate(4deg) translate(-6px,-8px)} }
+  @keyframes float2 { 0%,100%{transform:rotate(-2deg) translate(0,0)}   50%{transform:rotate(-1deg) translate(5px,-12px)} }
+  @keyframes float3 { 0%,100%{transform:rotate(5deg) translate(0,0)}    50%{transform:rotate(4deg) translate(-4px,-9px)} }
+  @keyframes float4 { 0%,100%{transform:rotate(3deg) translate(0,0)}    50%{transform:rotate(2deg) translate(6px,-8px)} }
+  @keyframes float5 { 0%,100%{transform:rotate(-3deg) translate(0,0)}   50%{transform:rotate(-4deg) translate(-5px,-11px)} }
+  @keyframes float6 { 0%,100%{transform:rotate(4deg) translate(0,0)}    50%{transform:rotate(5deg) translate(4px,-10px)} }
+  @keyframes float7 { 0%,100%{transform:rotate(-5deg) translate(0,0)}   50%{transform:rotate(-4deg) translate(-3px,-9px)} }
+  @keyframes float8 { 0%,100%{transform:rotate(-6deg) translate(0,0)}   50%{transform:rotate(-5deg) translate(5px,-7px)} }
+  @keyframes float9 { 0%,100%{transform:rotate(6deg) translate(0,0)}    50%{transform:rotate(5deg) translate(-4px,-11px)} }
 
   /* Dark gradient over the showcase */
   .showcase-overlay {
@@ -943,25 +955,33 @@ document.addEventListener('keydown', e => {
 })();
 
 // ══════════════════════════════════════
-//  SHOWCASE COVERS — static floating layout
+//  SHOWCASE COVERS — floating layout
 // ══════════════════════════════════════
 const SHOWCASE_IGDB_IDS = [
-  119133, 185246, 148241, 119388, 25076,
-  75235,  1877,   14362,  119171, 228542,
+  119133, // Elden Ring
+  25076,  // Red Dead Redemption 2
+  1942,   // The Witcher 3
+  37663,  // God of War (2018)
+  9806,   // The Last of Us
+  1020,   // GTA V
+  121,    // Minecraft
+  357,    // Half-Life 2
+  1022,   // Zelda: Ocarina of Time
+  103298, // Super Mario Odyssey
 ];
 
-// Fixed positions: [left%, top%, width(px), rotation(deg)]
+// [left%, top%, width(px), rotation(deg), anim-duration(s), anim-delay(s)]
 const COVER_POSITIONS = [
-  [8,   8,  130,  -4],
-  [30,  5,  110,   3],
-  [55,  12, 140,  -2],
-  [74,  4,  120,   5],
-  [6,   52, 120,   3],
-  [28,  55, 130,  -3],
-  [52,  50, 115,   4],
-  [72,  48, 135,  -5],
-  [18,  30, 100,  -6],
-  [62,  28, 105,   6],
+  [8,   8,  130,  -4, 6.0, 0.0],
+  [30,  5,  110,   3, 7.5, 0.8],
+  [55,  12, 140,  -2, 5.5, 1.5],
+  [74,  4,  120,   5, 8.0, 0.3],
+  [6,   52, 120,   3, 6.5, 1.1],
+  [28,  55, 130,  -3, 7.0, 0.6],
+  [52,  50, 115,   4, 5.8, 1.8],
+  [72,  48, 135,  -5, 6.8, 0.2],
+  [18,  30, 100,  -6, 7.2, 1.3],
+  [62,  28, 105,   6, 5.2, 0.9],
 ];
 
 async function loadShowcaseCovers() {
@@ -980,10 +1000,10 @@ async function loadShowcaseCovers() {
 
     const container = document.getElementById('showcase-covers');
     urls.forEach((url, i) => {
-      const [left, top, width, rot] = COVER_POSITIONS[i % COVER_POSITIONS.length];
+      const [left, top, width, rot, dur, delay] = COVER_POSITIONS[i % COVER_POSITIONS.length];
       const el = document.createElement('div');
       el.className = 'sc-cover';
-      el.style.cssText = `left:${left}%;top:${top}%;width:${width}px;height:${width * 1.33}px;transform:rotate(${rot}deg)`;
+      el.style.cssText = `left:${left}%;top:${top}%;width:${width}px;height:${Math.round(width*1.33)}px;animation:float${i} ${dur}s ease-in-out ${delay}s infinite;`;
       el.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
       container.appendChild(el);
     });
