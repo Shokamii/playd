@@ -986,7 +986,7 @@ const COVER_POSITIONS = [
 
 async function loadShowcaseCovers() {
   try {
-    const res = await fetch('/.netlify/functions/igdb', {
+    const res = await fetch('/api/igdb', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -1334,7 +1334,7 @@
 
   async function loadCovers() {
     try {
-      const res = await fetch('/.netlify/functions/igdb', {
+      const res = await fetch('/api/igdb', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1481,7 +1481,7 @@
         limit 8;
       `;
 
-      const res = await fetch('/.netlify/functions/igdb', {
+      const res = await fetch('/api/igdb', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ endpoint: 'games', body })
