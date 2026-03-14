@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ShoKamii — Playd</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -700,7 +702,206 @@
 
   .avg-rating-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
 
-  /* ── PROFILE TABS ── */
+  /* ── TAB PANELS ── */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    z-index: 9998;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(76,219,110,0.3); }
+  .toast.error { border-color: rgba(255,100,100,0.3); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--bg2);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 28px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    animation: fadeUp 0.25s ease;
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 20px;
+  }
+
+  .modal-close {
+    float: right;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .modal-game-slot {
+    aspect-ratio: 3/4;
+    border-radius: 8px;
+    border: 2px dashed var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg3);
+  }
+  .modal-game-slot:hover { border-color: var(--accent); }
+  .modal-game-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .modal-game-slot .slot-label { font-size: 11px; color: var(--muted); text-align: center; z-index: 1; }
+  .modal-game-slot .slot-icon { font-size: 24px; z-index: 1; }
+
+  .modal-search {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 10px;
+  }
+  .modal-search:focus { border-color: rgba(232,255,71,0.3); }
+  .modal-search::placeholder { color: var(--muted); }
+
+  .modal-results {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: none;
+  }
+  .modal-results.open { display: block; }
+
+  .modal-result-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .modal-result-item:last-child { border-bottom: none; }
+  .modal-result-item:hover { background: var(--bg3); }
+  .modal-result-item img { width: 28px; height: 37px; border-radius: 3px; object-fit: cover; }
+  .modal-result-name { font-size: 13px; font-weight: 500; }
+  .modal-result-year { font-size: 11px; color: var(--muted); }
+
+  .modal-btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+  .btn-modal-save { padding: 9px 22px; background: var(--accent); color: #0d0d0f; border: none; border-radius: 6px; font-size: 13px; font-weight: 700; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s; }
+  .btn-modal-save:hover { transform: translateY(-1px); }
+  .btn-modal-cancel { padding: 9px 18px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s; }
+  .btn-modal-cancel:hover { color: var(--text); }
+
+  /* ── GAMES TAB GRID ── */
+  .games-tab-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+  }
+
+  .games-tab-card {
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .games-tab-card:hover { transform: translateY(-3px); }
+
+  .games-tab-cover {
+    aspect-ratio: 3/4;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .games-tab-cover img { width: 100%; height: 100%; object-fit: cover; }
+  .games-tab-title { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+  .games-tab-status { font-size: 10px; color: var(--muted); }
+
+  .games-tab-filters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .games-filter-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .games-filter-btn:hover { color: var(--text); }
+  .games-filter-btn.active { background: rgba(232,255,71,0.08); border-color: rgba(232,255,71,0.2); color: var(--accent); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+  }
+  .empty-state-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .empty-state-desc { font-size: 13px; }
   .profile-tabs {
     display: flex;
     gap: 2px;
@@ -778,7 +979,7 @@
       ShoKamii
       <span class="profile-badge">TOP CRITIC</span>
     </div>
-    <div class="profile-bio">I genuinely love open world games that are breathtaking to look at.</div>
+    <div class="profile-bio">Open world obsessive. If it has a living, breathing world I'm already 80 hours in. Currently exploring every corner of Night City and not planning to stop anytime soon.</div>
     <div class="profile-meta">
       <span class="profile-meta-item">📍 <strong>Brisbane, Australia</strong></span>
       <span class="profile-meta-item">📅 Joined <strong>March 2023</strong></span>
@@ -830,222 +1031,325 @@
   <!-- LEFT COLUMN -->
   <div>
 
-    <!-- FAVORITE GAMES -->
-    <div class="profile-section">
-      <div class="section-head">
-        <span class="section-head-title">Favorite Games</span>
-        <a href="#" class="section-head-link">Edit ✎</a>
+    <!-- ══ OVERVIEW TAB ══ -->
+    <div class="tab-panel active" id="tab-overview">
+
+      <!-- FAVORITE GAMES -->
+      <div class="profile-section">
+        <div class="section-head">
+          <span class="section-head-title">Favorite Games</span>
+          <a href="#" class="section-head-link" id="edit-favs-btn">Edit ✎</a>
+        </div>
+        <div class="favorites-grid" id="favs-grid">
+          <div class="fav-game" onclick="window.location.href='game.html?igdb=25076'">
+            <div class="fav-cover" style="background:linear-gradient(135deg,#1a0a0a,#3d1a0a)">
+              <div class="fav-cover-placeholder" id="fav-cover-0">🤠</div>
+              <div class="fav-cover-overlay"><div class="fav-cover-title">Red Dead Redemption 2</div></div>
+            </div>
+            <div class="fav-title">Red Dead Redemption 2</div>
+          </div>
+          <div class="fav-game" onclick="window.location.href='game.html?igdb=75235'">
+            <div class="fav-cover" style="background:linear-gradient(135deg,#0a1a2e,#1a3a2e)">
+              <div class="fav-cover-placeholder" id="fav-cover-1">⛩️</div>
+              <div class="fav-cover-overlay"><div class="fav-cover-title">Ghost of Tsushima</div></div>
+            </div>
+            <div class="fav-title">Ghost of Tsushima</div>
+          </div>
+          <div class="fav-game" onclick="window.location.href='game.html?igdb=1877'">
+            <div class="fav-cover" style="background:linear-gradient(135deg,#0a0a2e,#1a1a5e)">
+              <div class="fav-cover-placeholder" id="fav-cover-2">🌆</div>
+              <div class="fav-cover-overlay"><div class="fav-cover-title">Cyberpunk 2077</div></div>
+            </div>
+            <div class="fav-title">Cyberpunk 2077</div>
+          </div>
+          <div class="fav-game" onclick="window.location.href='game.html?igdb=14362'">
+            <div class="fav-cover" style="background:linear-gradient(135deg,#1a0a2e,#2e1a3d)">
+              <div class="fav-cover-placeholder" id="fav-cover-3">🤖</div>
+              <div class="fav-cover-overlay"><div class="fav-cover-title">Detroit: Become Human</div></div>
+            </div>
+            <div class="fav-title">Detroit: Become Human</div>
+          </div>
+        </div>
       </div>
-      <div class="favorites-grid">
 
-        <div class="fav-game" onclick="window.location.href='game.html?igdb=25076'">
-          <div class="fav-cover" style="background:linear-gradient(135deg,#1a0a0a,#3d1a0a)">
-            <div class="fav-cover-placeholder" id="fav-cover-0">🤠</div>
-            <div class="fav-cover-overlay"><div class="fav-cover-title">Red Dead Redemption 2</div></div>
-          </div>
-          <div class="fav-title">Red Dead Redemption 2</div>
+      <!-- RECENTLY PLAYED -->
+      <div class="profile-section">
+        <div class="section-head">
+          <span class="section-head-title">Recently Played</span>
+          <a href="#" class="section-head-link" id="see-all-games-btn">See all →</a>
         </div>
-
-        <div class="fav-game" onclick="window.location.href='game.html?igdb=75235'">
-          <div class="fav-cover" style="background:linear-gradient(135deg,#0a1a2e,#1a3a2e)">
-            <div class="fav-cover-placeholder" id="fav-cover-1">⛩️</div>
-            <div class="fav-cover-overlay"><div class="fav-cover-title">Ghost of Tsushima</div></div>
+        <div class="recent-list">
+          <div class="recent-item" onclick="window.location.href='game.html?igdb=119133'">
+            <div class="recent-cover" id="recent-cover-0">🌌</div>
+            <div class="recent-info">
+              <div class="recent-title">Elden Ring</div>
+              <div class="recent-meta">RPG · FromSoftware · 2022</div>
+            </div>
+            <div class="recent-right">
+              <div class="recent-stars"><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span></div>
+              <span class="recent-status status-played">Played</span>
+            </div>
           </div>
-          <div class="fav-title">Ghost of Tsushima</div>
-        </div>
-
-        <div class="fav-game" onclick="window.location.href='game.html?igdb=1877'">
-          <div class="fav-cover" style="background:linear-gradient(135deg,#0a0a2e,#1a1a5e)">
-            <div class="fav-cover-placeholder" id="fav-cover-2">🌆</div>
-            <div class="fav-cover-overlay"><div class="fav-cover-title">Cyberpunk 2077</div></div>
+          <div class="recent-item" onclick="window.location.href='game.html?igdb=185246'">
+            <div class="recent-cover" id="recent-cover-1">🕵️</div>
+            <div class="recent-info">
+              <div class="recent-title">Alan Wake 2</div>
+              <div class="recent-meta">Horror · Remedy · 2023</div>
+            </div>
+            <div class="recent-right">
+              <div class="recent-stars"><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span></div>
+              <span class="recent-status status-playing">Playing</span>
+            </div>
           </div>
-          <div class="fav-title">Cyberpunk 2077</div>
-        </div>
-
-        <div class="fav-game" onclick="window.location.href='game.html?igdb=14362'">
-          <div class="fav-cover" style="background:linear-gradient(135deg,#1a0a2e,#2e1a3d)">
-            <div class="fav-cover-placeholder" id="fav-cover-3">🤖</div>
-            <div class="fav-cover-overlay"><div class="fav-cover-title">Detroit: Become Human</div></div>
+          <div class="recent-item" onclick="window.location.href='game.html?igdb=148241'">
+            <div class="recent-cover" id="recent-cover-2">🗡️</div>
+            <div class="recent-info">
+              <div class="recent-title">Lies of P</div>
+              <div class="recent-meta">Soulslike · Round8 · 2023</div>
+            </div>
+            <div class="recent-right">
+              <div class="recent-stars"><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs e">★</span></div>
+              <span class="recent-status status-played">Played</span>
+            </div>
           </div>
-          <div class="fav-title">Detroit: Become Human</div>
+          <div class="recent-item" onclick="window.location.href='game.html?igdb=119388'">
+            <div class="recent-cover" id="recent-cover-3">🌿</div>
+            <div class="recent-info">
+              <div class="recent-title">Zelda: Tears of the Kingdom</div>
+              <div class="recent-meta">Adventure · Nintendo · 2023</div>
+            </div>
+            <div class="recent-right">
+              <div class="recent-stars"><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs e">★</span></div>
+              <span class="recent-status status-backlog">Backlog</span>
+            </div>
+          </div>
         </div>
+      </div>
 
+      <!-- REVIEWS PREVIEW -->
+      <div class="profile-section">
+        <div class="section-head">
+          <span class="section-head-title">Recent Reviews</span>
+          <a href="#" class="section-head-link" id="see-all-reviews-btn">See all 87 →</a>
+        </div>
+        <div class="review-item">
+          <div class="review-game-cover" id="review-cover-0">🌌</div>
+          <div>
+            <div class="review-game-name">Elden Ring <span>2022</span></div>
+            <div class="review-stars-row"><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span></div>
+            <p class="review-text">FromSoftware didn't just make their best game — they made one of the greatest games ever created. The open world could have diluted the signature tension, but instead it amplifies it.</p>
+            <div class="review-footer-row">
+              <button class="review-like-btn" data-id="r1">♥ <span>847</span></button>
+              <span class="review-date">March 4, 2024</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-item">
+          <div class="review-game-cover" id="review-cover-1">🕵️</div>
+          <div>
+            <div class="review-game-name">Alan Wake 2 <span>2023</span></div>
+            <div class="review-stars-row"><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span></div>
+            <p class="review-text">Remedy just made a genuine masterpiece. The live-action sequences shouldn't work but they absolutely do. A love letter to Twin Peaks and everyone who finished the first game a decade ago.</p>
+            <div class="review-footer-row">
+              <button class="review-like-btn" data-id="r2">♥ <span>412</span></button>
+              <span class="review-date">January 12, 2024</span>
+            </div>
+          </div>
+        </div>
+        <div class="review-item">
+          <div class="review-game-cover" id="review-cover-2">🏹</div>
+          <div>
+            <div class="review-game-name">Baldur's Gate 3 <span>2023</span></div>
+            <div class="review-stars-row"><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span></div>
+            <p class="review-text">This is the kind of game that redefines what the medium is capable of. Every decision feels meaningful. I haven't cared about fictional people this much since Mass Effect 2.</p>
+            <div class="review-footer-row">
+              <button class="review-like-btn" data-id="r3">♥ <span>298</span></button>
+              <span class="review-date">November 2, 2023</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LISTS PREVIEW -->
+      <div class="profile-section">
+        <div class="section-head">
+          <span class="section-head-title">Game Lists</span>
+          <a href="#" class="section-head-link" id="see-all-lists-btn">See all 14 →</a>
+        </div>
+        <div class="lists-grid">
+          <div class="list-card">
+            <div class="list-card-covers">
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#1a0a2e,#3d1a6e)">🌌</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#1a0a1e,#3d1a6e)">⚔️</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a1a2e,#1a3a5e)">🗡️</div>
+            </div>
+            <div class="list-card-name">Best of FromSoftware</div>
+            <div class="list-card-meta">8 games · 142 likes</div>
+          </div>
+          <div class="list-card">
+            <div class="list-card-covers">
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e1a0a,#6e3d1a)">🏹</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#1a2e0a,#3a5e1a)">🦋</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e0a2e,#6e1a6e)">👁️</div>
+            </div>
+            <div class="list-card-name">Games That Made Me Cry</div>
+            <div class="list-card-meta">12 games · 89 likes</div>
+          </div>
+          <div class="list-card">
+            <div class="list-card-covers">
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e2a0a,#6e5a1a)">🔥</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a2a2e,#1a5a6e)">⚡</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#2a0a2e,#5a1a6e)">💀</div>
+            </div>
+            <div class="list-card-name">Perfect 10s Only</div>
+            <div class="list-card-meta">5 games · 211 likes</div>
+          </div>
+          <div class="list-card">
+            <div class="list-card-covers">
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a2e1e,#1a6e4e)">🌿</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e1e0a,#6e4e1a)">🏰</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a1e2e,#1a4e6e)">🌊</div>
+            </div>
+            <div class="list-card-name">Cozy Weekend Games</div>
+            <div class="list-card-meta">9 games · 67 likes</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tab-overview -->
+
+    <!-- ══ GAMES TAB ══ -->
+    <div class="tab-panel" id="tab-games">
+      <div class="profile-section">
+        <div class="section-head">
+          <span class="section-head-title">All Games <span id="games-count" style="color:var(--muted);font-weight:400"></span></span>
+        </div>
+        <div class="games-tab-filters">
+          <button class="games-filter-btn active" data-filter="all">All</button>
+          <button class="games-filter-btn" data-filter="played">Played</button>
+          <button class="games-filter-btn" data-filter="playing">Playing</button>
+          <button class="games-filter-btn" data-filter="backlog">Backlog</button>
+        </div>
+        <div class="games-tab-grid" id="games-tab-grid">
+          <!-- Rendered by JS -->
+        </div>
       </div>
     </div>
 
-    <!-- RECENTLY PLAYED -->
-    <div class="profile-section">
-      <div class="section-head">
-        <span class="section-head-title">Recently Played</span>
-        <a href="#" class="section-head-link">See all →</a>
-      </div>
-      <div class="recent-list">
-
-        <div class="recent-item" onclick="window.location.href='game.html?igdb=119133'">
-          <div class="recent-cover" id="recent-cover-0">🌌</div>
-          <div class="recent-info">
-            <div class="recent-title">Elden Ring</div>
-            <div class="recent-meta">RPG · FromSoftware · 2022</div>
-          </div>
-          <div class="recent-right">
-            <div class="recent-stars">
-              <span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span>
+    <!-- ══ REVIEWS TAB ══ -->
+    <div class="tab-panel" id="tab-reviews">
+      <div class="profile-section">
+        <div class="section-head">
+          <span class="section-head-title">All Reviews</span>
+        </div>
+        <div id="reviews-tab-list">
+          <div class="review-item">
+            <div class="review-game-cover" id="rev-cover-0">🌌</div>
+            <div>
+              <div class="review-game-name">Elden Ring <span>2022</span></div>
+              <div class="review-stars-row"><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span></div>
+              <p class="review-text" style="-webkit-line-clamp:unset;line-clamp:unset">FromSoftware didn't just make their best game — they made one of the greatest games ever created. The open world could have diluted the signature tension, but instead it amplifies every decision, every fog gate, every boss fog wall. I've never felt more terrified and more thrilled simultaneously.</p>
+              <div class="review-footer-row">
+                <button class="review-like-btn" data-id="r1">♥ <span>847</span></button>
+                <span class="review-date">March 4, 2024</span>
+              </div>
             </div>
-            <span class="recent-status status-played">Played</span>
+          </div>
+          <div class="review-item">
+            <div class="review-game-cover" id="rev-cover-1">🕵️</div>
+            <div>
+              <div class="review-game-name">Alan Wake 2 <span>2023</span></div>
+              <div class="review-stars-row"><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span></div>
+              <p class="review-text" style="-webkit-line-clamp:unset;line-clamp:unset">Remedy just made a genuine masterpiece. The live-action sequences shouldn't work but they absolutely do. A love letter to Twin Peaks and everyone who finished the first game a decade ago. One of those rare sequels that couldn't have existed without the original.</p>
+              <div class="review-footer-row">
+                <button class="review-like-btn" data-id="r2">♥ <span>412</span></button>
+                <span class="review-date">January 12, 2024</span>
+              </div>
+            </div>
+          </div>
+          <div class="review-item">
+            <div class="review-game-cover" id="rev-cover-2">🏹</div>
+            <div>
+              <div class="review-game-name">Baldur's Gate 3 <span>2023</span></div>
+              <div class="review-stars-row"><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span></div>
+              <p class="review-text" style="-webkit-line-clamp:unset;line-clamp:unset">This is the kind of game that redefines what the medium is capable of. Every decision feels meaningful. I haven't cared about fictional people this much since Mass Effect 2. And it's somehow funny and heartbreaking and epic all at once.</p>
+              <div class="review-footer-row">
+                <button class="review-like-btn" data-id="r3">♥ <span>298</span></button>
+                <span class="review-date">November 2, 2023</span>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div class="recent-item" onclick="window.location.href='game.html?igdb=185246'">
-          <div class="recent-cover" id="recent-cover-1">🕵️</div>
-          <div class="recent-info">
-            <div class="recent-title">Alan Wake 2</div>
-            <div class="recent-meta">Horror · Remedy · 2023</div>
-          </div>
-          <div class="recent-right">
-            <div class="recent-stars">
-              <span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span>
-            </div>
-            <span class="recent-status status-playing">Playing</span>
-          </div>
-        </div>
-
-        <div class="recent-item" onclick="window.location.href='game.html?igdb=148241'">
-          <div class="recent-cover" id="recent-cover-2">🗡️</div>
-          <div class="recent-info">
-            <div class="recent-title">Lies of P</div>
-            <div class="recent-meta">Soulslike · Round8 · 2023</div>
-          </div>
-          <div class="recent-right">
-            <div class="recent-stars">
-              <span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs e">★</span>
-            </div>
-            <span class="recent-status status-played">Played</span>
-          </div>
-        </div>
-
-        <div class="recent-item" onclick="window.location.href='game.html?igdb=119388'">
-          <div class="recent-cover" id="recent-cover-3">🌿</div>
-          <div class="recent-info">
-            <div class="recent-title">Zelda: Tears of the Kingdom</div>
-            <div class="recent-meta">Adventure · Nintendo · 2023</div>
-          </div>
-          <div class="recent-right">
-            <div class="recent-stars">
-              <span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs">★</span><span class="rs e">★</span>
-            </div>
-            <span class="recent-status status-backlog">Backlog</span>
-          </div>
-        </div>
-
       </div>
     </div>
 
-    <!-- REVIEWS -->
-    <div class="profile-section">
-      <div class="section-head">
-        <span class="section-head-title">Recent Reviews</span>
-        <a href="#" class="section-head-link">See all 87 →</a>
-      </div>
-
-      <div class="review-item">
-        <div class="review-game-cover" id="review-cover-0">🌌</div>
-        <div class="review-body">
-          <div class="review-game-name">Elden Ring <span>2022</span></div>
-          <div class="review-stars-row">
-            <span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span>
+    <!-- ══ LISTS TAB ══ -->
+    <div class="tab-panel" id="tab-lists">
+      <div class="profile-section">
+        <div class="section-head">
+          <span class="section-head-title">All Lists</span>
+          <a href="#" class="section-head-link" id="new-list-btn">+ New List</a>
+        </div>
+        <div class="lists-grid">
+          <div class="list-card">
+            <div class="list-card-covers">
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#1a0a2e,#3d1a6e)">🌌</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#1a0a1e,#3d1a6e)">⚔️</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a1a2e,#1a3a5e)">🗡️</div>
+            </div>
+            <div class="list-card-name">Best of FromSoftware</div>
+            <div class="list-card-meta">8 games · 142 likes</div>
           </div>
-          <p class="review-text">FromSoftware didn't just make their best game — they made one of the greatest games ever created. The open world could have diluted the signature tension, but instead it amplifies it.</p>
-          <div class="review-footer-row">
-            <button class="review-like-btn" onclick="toggleLike(this)">♥ <span>847</span></button>
-            <span class="review-date">March 4, 2024</span>
+          <div class="list-card">
+            <div class="list-card-covers">
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e1a0a,#6e3d1a)">🏹</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#1a2e0a,#3a5e1a)">🦋</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e0a2e,#6e1a6e)">👁️</div>
+            </div>
+            <div class="list-card-name">Games That Made Me Cry</div>
+            <div class="list-card-meta">12 games · 89 likes</div>
+          </div>
+          <div class="list-card">
+            <div class="list-card-covers">
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e2a0a,#6e5a1a)">🔥</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a2a2e,#1a5a6e)">⚡</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#2a0a2e,#5a1a6e)">💀</div>
+            </div>
+            <div class="list-card-name">Perfect 10s Only</div>
+            <div class="list-card-meta">5 games · 211 likes</div>
+          </div>
+          <div class="list-card">
+            <div class="list-card-covers">
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a2e1e,#1a6e4e)">🌿</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e1e0a,#6e4e1a)">🏰</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a1e2e,#1a4e6e)">🌊</div>
+            </div>
+            <div class="list-card-name">Cozy Weekend Games</div>
+            <div class="list-card-meta">9 games · 67 likes</div>
+          </div>
+          <div class="list-card">
+            <div class="list-card-covers">
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#1a2e1a,#3a6e3a)">🎯</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e1a1a,#6e3a3a)">🏆</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#1a1a2e,#3a3a6e)">🎮</div>
+            </div>
+            <div class="list-card-name">100% Completions</div>
+            <div class="list-card-meta">6 games · 38 likes</div>
+          </div>
+          <div class="list-card">
+            <div class="list-card-covers">
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e2e1a,#6e6e3a)">⭐</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#1a2e2e,#3a6e6e)">🌟</div>
+              <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e1a2e,#6e3a6e)">✨</div>
+            </div>
+            <div class="list-card-name">Hidden Gems</div>
+            <div class="list-card-meta">11 games · 74 likes</div>
           </div>
         </div>
-      </div>
-
-      <div class="review-item">
-        <div class="review-game-cover" id="review-cover-1">🕵️</div>
-        <div class="review-body">
-          <div class="review-game-name">Alan Wake 2 <span>2023</span></div>
-          <div class="review-stars-row">
-            <span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span>
-          </div>
-          <p class="review-text">Remedy just made a genuine masterpiece. The live-action sequences shouldn't work but they absolutely do. A love letter to Twin Peaks and everyone who finished the first game a decade ago.</p>
-          <div class="review-footer-row">
-            <button class="review-like-btn" onclick="toggleLike(this)">♥ <span>412</span></button>
-            <span class="review-date">January 12, 2024</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="review-item">
-        <div class="review-game-cover" id="review-cover-2">🏹</div>
-        <div class="review-body">
-          <div class="review-game-name">Baldur's Gate 3 <span>2023</span></div>
-          <div class="review-stars-row">
-            <span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span>
-          </div>
-          <p class="review-text">This is the kind of game that redefines what the medium is capable of. Every decision feels meaningful. I haven't cared about fictional people this much since Mass Effect 2.</p>
-          <div class="review-footer-row">
-            <button class="review-like-btn" onclick="toggleLike(this)">♥ <span>298</span></button>
-            <span class="review-date">November 2, 2023</span>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- LISTS -->
-    <div class="profile-section">
-      <div class="section-head">
-        <span class="section-head-title">Game Lists</span>
-        <a href="#" class="section-head-link">See all 14 →</a>
-      </div>
-      <div class="lists-grid">
-
-        <div class="list-card">
-          <div class="list-card-covers">
-            <div class="list-mini-cover" id="list-cover-0-0" style="background:linear-gradient(135deg,#1a0a2e,#3d1a6e)">🌌</div>
-            <div class="list-mini-cover" id="list-cover-0-1" style="background:linear-gradient(135deg,#1a0a1e,#3d1a6e)">⚔️</div>
-            <div class="list-mini-cover" id="list-cover-0-2" style="background:linear-gradient(135deg,#0a1a2e,#1a3a5e)">🗡️</div>
-          </div>
-          <div class="list-card-name">Best of FromSoftware</div>
-          <div class="list-card-meta">8 games · 142 likes</div>
-        </div>
-
-        <div class="list-card">
-          <div class="list-card-covers">
-            <div class="list-mini-cover" id="list-cover-1-0" style="background:linear-gradient(135deg,#2e1a0a,#6e3d1a)">🏹</div>
-            <div class="list-mini-cover" id="list-cover-1-1" style="background:linear-gradient(135deg,#1a2e0a,#3a5e1a)">🦋</div>
-            <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e0a2e,#6e1a6e)">👁️</div>
-          </div>
-          <div class="list-card-name">Games That Made Me Cry</div>
-          <div class="list-card-meta">12 games · 89 likes</div>
-        </div>
-
-        <div class="list-card">
-          <div class="list-card-covers">
-            <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e2a0a,#6e5a1a)">🔥</div>
-            <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a2a2e,#1a5a6e)">⚡</div>
-            <div class="list-mini-cover" style="background:linear-gradient(135deg,#2a0a2e,#5a1a6e)">💀</div>
-          </div>
-          <div class="list-card-name">Perfect 10s Only</div>
-          <div class="list-card-meta">5 games · 211 likes</div>
-        </div>
-
-        <div class="list-card">
-          <div class="list-card-covers">
-            <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a2e1e,#1a6e4e)">🌿</div>
-            <div class="list-mini-cover" style="background:linear-gradient(135deg,#2e1e0a,#6e4e1a)">🏰</div>
-            <div class="list-mini-cover" style="background:linear-gradient(135deg,#0a1e2e,#1a4e6e)">🌊</div>
-          </div>
-          <div class="list-card-name">Cozy Weekend Games</div>
-          <div class="list-card-meta">9 games · 67 likes</div>
-        </div>
-
       </div>
     </div>
 
-  </div>
+  </div><!-- /left column -->
 
   <!-- SIDEBAR -->
   <div>
@@ -1110,44 +1414,27 @@
     <!-- FOLLOWERS -->
     <div class="sidebar-widget">
       <div class="widget-title">Followers</div>
-
-      <div class="follower-item">
+      <div class="follower-item" onclick="showToast('Profiles coming soon!','success')">
         <div class="follower-avatar" style="background:linear-gradient(135deg,#ff6b35,#ff4488)">MX</div>
-        <div>
-          <div class="follower-name">mxvoid</div>
-          <div class="follower-games">218 games</div>
-        </div>
+        <div><div class="follower-name">mxvoid</div><div class="follower-games">218 games</div></div>
       </div>
-
-      <div class="follower-item">
+      <div class="follower-item" onclick="showToast('Profiles coming soon!','success')">
         <div class="follower-avatar" style="background:linear-gradient(135deg,#47ffcc,#4488ff)">SL</div>
-        <div>
-          <div class="follower-name">solarleaf</div>
-          <div class="follower-games">401 games</div>
-        </div>
+        <div><div class="follower-name">solarleaf</div><div class="follower-games">401 games</div></div>
       </div>
-
-      <div class="follower-item">
+      <div class="follower-item" onclick="showToast('Profiles coming soon!','success')">
         <div class="follower-avatar" style="background:linear-gradient(135deg,#cc47ff,#ff47aa)">PL</div>
-        <div>
-          <div class="follower-name">pluto_d</div>
-          <div class="follower-games">167 games</div>
-        </div>
+        <div><div class="follower-name">pluto_d</div><div class="follower-games">167 games</div></div>
       </div>
-
-      <div class="follower-item">
+      <div class="follower-item" onclick="showToast('Profiles coming soon!','success')">
         <div class="follower-avatar" style="background:linear-gradient(135deg,#ffcc47,#ff8847)">TK</div>
-        <div>
-          <div class="follower-name">tako_gg</div>
-          <div class="follower-games">89 games</div>
-        </div>
+        <div><div class="follower-name">tako_gg</div><div class="follower-games">89 games</div></div>
       </div>
-
-      <a href="#" style="display:block;text-align:center;font-size:12px;color:var(--muted);margin-top:14px;text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">See all 284 followers →</a>
+      <a href="#" id="see-all-followers-btn" style="display:block;text-align:center;font-size:12px;color:var(--muted);margin-top:14px;text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">See all 284 followers →</a>
     </div>
 
   </div>
-</div>
+</div><!-- /main-layout -->
 
 <!-- FOOTER -->
 <footer>
@@ -1155,89 +1442,366 @@
   <div class="footer-copy">© 2025 Playd. All rights reserved.</div>
 </footer>
 
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- EDIT FAVORITES MODAL -->
+<div class="modal-overlay" id="favs-modal">
+  <div class="modal">
+    <div class="modal-title">
+      Edit Favourite Games
+      <button class="modal-close" id="favs-modal-close">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Search for a game then click a slot to replace it.</p>
+    <div class="modal-grid" id="modal-slots">
+      <!-- Slots rendered by JS -->
+    </div>
+    <input class="modal-search" id="modal-search-input" placeholder="Search for a game…" autocomplete="off">
+    <div class="modal-results" id="modal-results"></div>
+    <div class="modal-btn-row">
+      <button class="btn-modal-cancel" id="favs-modal-cancel">Cancel</button>
+      <button class="btn-modal-save" id="favs-modal-save">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  // ── LOAD COVERS ──
-  const COVER_IDS = {
-    fav: [25076, 75235, 1877, 14362],
-    recent: [119133, 185246, 148241, 119388],
-    review: [119133, 185246, 119171]
-  };
+// ══════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (type ? ' ' + type : '');
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
 
-  async function loadProfileCovers() {
-    const allIds = [...new Set([...COVER_IDS.fav, ...COVER_IDS.recent, ...COVER_IDS.review])];
+// ══════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════
+const tabBtns = document.querySelectorAll('.profile-tab');
+const tabPanels = document.querySelectorAll('.tab-panel');
 
+function switchTab(name) {
+  tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+  if (name === 'games') renderGamesTab('all');
+}
+
+tabBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+
+// "See all" links jump to relevant tab
+document.getElementById('see-all-games-btn').addEventListener('click', e => { e.preventDefault(); switchTab('games'); });
+document.getElementById('see-all-reviews-btn').addEventListener('click', e => { e.preventDefault(); switchTab('reviews'); });
+document.getElementById('see-all-lists-btn').addEventListener('click', e => { e.preventDefault(); switchTab('lists'); });
+document.getElementById('see-all-followers-btn').addEventListener('click', e => { e.preventDefault(); showToast('Followers page coming soon!'); });
+document.getElementById('new-list-btn').addEventListener('click', e => { e.preventDefault(); showToast('List creator coming soon!'); });
+
+// ══════════════════════════════════════
+//  GAMES TAB — filter + render
+// ══════════════════════════════════════
+const GAMES_DATA = [
+  { igdb: 119133, title: 'Elden Ring',               year: 2022, status: 'played',  rating: 5 },
+  { igdb: 185246, title: 'Alan Wake 2',               year: 2023, status: 'playing', rating: 5 },
+  { igdb: 148241, title: 'Lies of P',                 year: 2023, status: 'played',  rating: 4 },
+  { igdb: 119388, title: 'Zelda: TotK',               year: 2023, status: 'backlog', rating: 4 },
+  { igdb: 25076,  title: 'Red Dead Redemption 2',     year: 2018, status: 'played',  rating: 5 },
+  { igdb: 75235,  title: 'Ghost of Tsushima',         year: 2020, status: 'played',  rating: 5 },
+  { igdb: 1877,   title: 'Cyberpunk 2077',            year: 2020, status: 'playing', rating: 4 },
+  { igdb: 14362,  title: 'Detroit: Become Human',     year: 2018, status: 'played',  rating: 5 },
+  { igdb: 119171, title: "Baldur's Gate 3",           year: 2023, status: 'played',  rating: 5 },
+  { igdb: 228542, title: 'Armored Core VI',           year: 2023, status: 'backlog', rating: 0 },
+];
+
+const coverCache = {};
+
+function stars(n) {
+  return [1,2,3,4,5].map(i => `<span class="rs${i>n?' e':''}" style="font-size:10px">★</span>`).join('');
+}
+
+function renderGamesTab(filter) {
+  const grid = document.getElementById('games-tab-grid');
+  const filtered = filter === 'all' ? GAMES_DATA : GAMES_DATA.filter(g => g.status === filter);
+  document.getElementById('games-count').textContent = `(${filtered.length})`;
+
+  grid.innerHTML = filtered.map((g, i) => `
+    <div class="games-tab-card" onclick="window.location.href='game.html?igdb=${g.igdb}'">
+      <div class="games-tab-cover" id="gtc-${g.igdb}">
+        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--muted)">🎮</div>
+      </div>
+      <div class="games-tab-title">${g.title}</div>
+      <div class="games-tab-status" style="display:flex;gap:4px;align-items:center">
+        <span class="recent-status status-${g.status}" style="font-size:9px;padding:1px 6px">${g.status.charAt(0).toUpperCase()+g.status.slice(1)}</span>
+        ${g.rating ? stars(g.rating) : ''}
+      </div>
+    </div>
+  `).join('');
+
+  // Load covers for visible games
+  loadCoversForIds(filtered.map(g => g.igdb), id => {
+    const el = document.getElementById(`gtc-${id}`);
+    if (el && coverCache[id]) el.innerHTML = `<img src="${coverCache[id]}" alt="" style="width:100%;height:100%;object-fit:cover">`;
+  });
+}
+
+// Filter buttons
+document.querySelectorAll('.games-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.games-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderGamesTab(btn.dataset.filter);
+  });
+});
+
+// ══════════════════════════════════════
+//  FOLLOW BUTTON
+// ══════════════════════════════════════
+const followBtn = document.getElementById('follow-btn');
+let isFollowing = false;
+
+followBtn.addEventListener('click', () => {
+  isFollowing = !isFollowing;
+  followBtn.classList.toggle('following', isFollowing);
+  followBtn.textContent = isFollowing ? '✓ Following' : '+ Follow';
+  showToast(isFollowing ? 'Following ShoKamii!' : 'Unfollowed ShoKamii', isFollowing ? 'success' : '');
+});
+
+// ══════════════════════════════════════
+//  MESSAGE BUTTON
+// ══════════════════════════════════════
+document.querySelector('.btn-message').addEventListener('click', () => {
+  showToast('Messaging coming soon!');
+});
+
+// ══════════════════════════════════════
+//  NAV BUTTONS
+// ══════════════════════════════════════
+document.querySelector('.btn-ghost').addEventListener('click', () => {
+  showToast('Sign in page coming soon!');
+});
+document.querySelector('.btn-accent').addEventListener('click', () => {
+  showToast('Sign up page coming soon!');
+});
+
+// ══════════════════════════════════════
+//  REVIEW LIKE BUTTONS
+// ══════════════════════════════════════
+const likedReviews = new Set();
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.review-like-btn');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  const span = btn.querySelector('span');
+  const count = parseInt(span.textContent);
+  if (likedReviews.has(id)) {
+    likedReviews.delete(id);
+    btn.classList.remove('liked');
+    span.textContent = count - 1;
+  } else {
+    likedReviews.add(id);
+    btn.classList.add('liked');
+    span.textContent = count + 1;
+  }
+  // Sync both Overview and Reviews tab copies
+  document.querySelectorAll(`.review-like-btn[data-id="${id}"]`).forEach(b => {
+    b.classList.toggle('liked', likedReviews.has(id));
+    b.querySelector('span').textContent = span.textContent;
+  });
+});
+
+// ══════════════════════════════════════
+//  LIST CARDS
+// ══════════════════════════════════════
+document.querySelectorAll('.list-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const name = card.querySelector('.list-card-name')?.textContent || 'List';
+    showToast(`"${name}" — list pages coming soon!`);
+  });
+});
+
+// ══════════════════════════════════════
+//  COVER LOADING
+// ══════════════════════════════════════
+const COVER_IDS = {
+  fav:    [25076, 75235, 1877, 14362],
+  recent: [119133, 185246, 148241, 119388],
+  review: [119133, 185246, 119171],
+  revtab: [119133, 185246, 119171],
+};
+
+async function loadCoversForIds(ids, callback) {
+  const needed = ids.filter(id => !coverCache[id]);
+  if (needed.length) {
     try {
       const res = await fetch('/.netlify/functions/igdb', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           endpoint: 'games',
-          body: `fields id, cover.url; where id = (${allIds.join(',')}); limit ${allIds.length};`
+          body: `fields id, cover.url; where id = (${needed.join(',')}); limit ${needed.length};`
         })
       });
-
       const games = await res.json();
-      const coverMap = {};
       games.forEach(g => {
-        if (g.cover?.url) coverMap[g.id] = 'https:' + g.cover.url.replace('t_thumb', 't_cover_big');
+        if (g.cover?.url) coverCache[g.id] = 'https:' + g.cover.url.replace('t_thumb', 't_cover_big');
       });
+    } catch(e) { console.warn('Cover load error:', e); }
+  }
+  ids.forEach(id => callback(id));
+}
 
-      // Inject favorite covers
-      COVER_IDS.fav.forEach((id, i) => {
-        const el = document.getElementById(`fav-cover-${i}`);
-        if (el && coverMap[id]) {
-          const highRes = coverMap[id].replace('t_cover_big', 't_720p');
-          el.innerHTML = `<img src="${highRes}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">`;
-          el.style.fontSize = '0';
-        }
-      });
+async function loadProfileCovers() {
+  const allIds = [...new Set([...COVER_IDS.fav, ...COVER_IDS.recent, ...COVER_IDS.review])];
+  await loadCoversForIds(allIds, () => {});
 
-      // Inject recent covers
-      COVER_IDS.recent.forEach((id, i) => {
-        const el = document.getElementById(`recent-cover-${i}`);
-        if (el && coverMap[id]) {
-          el.innerHTML = `<img src="${coverMap[id]}" alt="">`;
-        }
-      });
-
-      // Inject review covers
-      COVER_IDS.review.forEach((id, i) => {
-        const el = document.getElementById(`review-cover-${i}`);
-        if (el && coverMap[id]) {
-          el.innerHTML = `<img src="${coverMap[id]}" alt="">`;
-          el.style.fontSize = '0';
-        }
-      });
-
-    } catch (e) {
-      console.warn('Could not load covers:', e);
+  // Fav covers — high res
+  COVER_IDS.fav.forEach((id, i) => {
+    const el = document.getElementById(`fav-cover-${i}`);
+    if (el && coverCache[id]) {
+      el.innerHTML = `<img src="${coverCache[id].replace('t_cover_big','t_720p')}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">`;
+      el.style.fontSize = '0';
     }
-  }
+  });
 
-  loadProfileCovers();
+  // Recent covers
+  COVER_IDS.recent.forEach((id, i) => {
+    const el = document.getElementById(`recent-cover-${i}`);
+    if (el && coverCache[id]) el.innerHTML = `<img src="${coverCache[id]}" alt="">`;
+  });
 
-  // ── FOLLOW BUTTON ──
-  function toggleFollow() {
-    const btn = document.getElementById('follow-btn');
-    const following = btn.classList.toggle('following');
-    btn.textContent = following ? '✓ Following' : '+ Follow';
-  }
+  // Review covers (overview tab)
+  COVER_IDS.review.forEach((id, i) => {
+    const el = document.getElementById(`review-cover-${i}`);
+    if (el && coverCache[id]) { el.innerHTML = `<img src="${coverCache[id]}" alt="">`; el.style.fontSize = '0'; }
+  });
 
-  // ── LIKE REVIEWS ──
-  function toggleLike(btn) {
-    const liked = btn.classList.toggle('liked');
-    const span = btn.querySelector('span');
-    const count = parseInt(span.textContent);
-    span.textContent = liked ? count + 1 : count - 1;
-  }
+  // Review covers (reviews tab)
+  COVER_IDS.revtab.forEach((id, i) => {
+    const el = document.getElementById(`rev-cover-${i}`);
+    if (el && coverCache[id]) { el.innerHTML = `<img src="${coverCache[id]}" alt="">`; el.style.fontSize = '0'; }
+  });
+}
 
-  // ── PROFILE TABS ──
-  document.querySelectorAll('.profile-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
+loadProfileCovers();
+
+// ══════════════════════════════════════
+//  EDIT FAVOURITES MODAL
+// ══════════════════════════════════════
+const favsModal = document.getElementById('favs-modal');
+let currentFavs = [
+  { igdb: 25076, title: 'Red Dead Redemption 2' },
+  { igdb: 75235, title: 'Ghost of Tsushima' },
+  { igdb: 1877,  title: 'Cyberpunk 2077' },
+  { igdb: 14362, title: 'Detroit: Become Human' },
+];
+let activeSlot = null;
+
+function renderModalSlots() {
+  const grid = document.getElementById('modal-slots');
+  grid.innerHTML = currentFavs.map((g, i) => `
+    <div class="modal-game-slot${activeSlot===i?' border-color:var(--accent)':''}" data-slot="${i}" id="modal-slot-${i}">
+      ${coverCache[g.igdb] ? `<img src="${coverCache[g.igdb].replace('t_cover_big','t_720p')}" alt="">` : ''}
+      <span class="slot-icon" style="${coverCache[g.igdb]?'display:none':''}">🎮</span>
+      <span class="slot-label">${g.title.length > 14 ? g.title.slice(0,14)+'…' : g.title}</span>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.modal-game-slot').forEach(slot => {
+    slot.addEventListener('click', () => {
+      document.querySelectorAll('.modal-game-slot').forEach(s => s.style.borderColor = '');
+      activeSlot = parseInt(slot.dataset.slot);
+      slot.style.borderColor = 'var(--accent)';
+      document.getElementById('modal-search-input').focus();
     });
   });
+}
+
+document.getElementById('edit-favs-btn').addEventListener('click', e => {
+  e.preventDefault();
+  activeSlot = null;
+  renderModalSlots();
+  favsModal.classList.add('open');
+});
+
+function closeFavsModal() {
+  favsModal.classList.remove('open');
+  document.getElementById('modal-search-input').value = '';
+  document.getElementById('modal-results').innerHTML = '';
+  document.getElementById('modal-results').classList.remove('open');
+}
+
+document.getElementById('favs-modal-close').addEventListener('click', closeFavsModal);
+document.getElementById('favs-modal-cancel').addEventListener('click', closeFavsModal);
+favsModal.addEventListener('click', e => { if (e.target === favsModal) closeFavsModal(); });
+
+// Search in modal
+let searchTimer;
+document.getElementById('modal-search-input').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  const q = e.target.value.trim();
+  if (!q) { document.getElementById('modal-results').classList.remove('open'); return; }
+  searchTimer = setTimeout(async () => {
+    try {
+      const res = await fetch('/.netlify/functions/igdb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: 'games', body: `search "${q}"; fields id,name,cover.url,first_release_date; limit 6;` })
+      });
+      const games = await res.json();
+      const resultsEl = document.getElementById('modal-results');
+      resultsEl.innerHTML = games.map(g => {
+        const coverUrl = g.cover?.url ? 'https:' + g.cover.url.replace('t_thumb','t_cover_big') : '';
+        const year = g.first_release_date ? new Date(g.first_release_date * 1000).getFullYear() : '';
+        return `<div class="modal-result-item" data-igdb="${g.id}" data-title="${g.name}" data-cover="${coverUrl}">
+          ${coverUrl ? `<img src="${coverUrl}" alt="">` : '<div style="width:28px;height:37px;background:var(--bg3);border-radius:3px"></div>'}
+          <div>
+            <div class="modal-result-name">${g.name}</div>
+            ${year ? `<div class="modal-result-year">${year}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+      resultsEl.classList.toggle('open', games.length > 0);
+
+      resultsEl.querySelectorAll('.modal-result-item').forEach(item => {
+        item.addEventListener('click', () => {
+          if (activeSlot === null) { showToast('Tap a slot above first', ''); return; }
+          const id = parseInt(item.dataset.igdb);
+          const title = item.dataset.title;
+          const cover = item.dataset.cover;
+          currentFavs[activeSlot] = { igdb: id, title };
+          if (cover) coverCache[id] = cover;
+          activeSlot = null;
+          document.getElementById('modal-search-input').value = '';
+          resultsEl.classList.remove('open');
+          renderModalSlots();
+          showToast(`Slot updated to "${title}"`);
+        });
+      });
+    } catch(e) { console.warn(e); }
+  }, 300);
+});
+
+// Save favorites
+document.getElementById('favs-modal-save').addEventListener('click', () => {
+  // Update the visible grid
+  const grid = document.getElementById('favs-grid');
+  grid.innerHTML = currentFavs.map((g, i) => `
+    <div class="fav-game" onclick="window.location.href='game.html?igdb=${g.igdb}'">
+      <div class="fav-cover" style="background:var(--bg3)">
+        <div class="fav-cover-placeholder" id="fav-cover-${i}" style="font-size:${coverCache[g.igdb]?'0':'36px'}">
+          ${coverCache[g.igdb] ? `<img src="${coverCache[g.igdb].replace('t_cover_big','t_720p')}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">` : '🎮'}
+        </div>
+        <div class="fav-cover-overlay"><div class="fav-cover-title">${g.title}</div></div>
+      </div>
+      <div class="fav-title">${g.title}</div>
+    </div>
+  `).join('');
+  closeFavsModal();
+  showToast('Favourite games saved!', 'success');
+});
 </script>
 </body>
 </html>
