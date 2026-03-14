@@ -55,49 +55,46 @@
     background: #080809;
   }
 
-  /* Scrolling film-strip of covers */
-  .showcase-strip {
+  .showcase-bg {
     position: absolute;
     inset: 0;
-    display: flex;
-    gap: 0;
+    background:
+      radial-gradient(ellipse at 20% 40%, rgba(232,255,71,0.08) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 70%, rgba(255,107,53,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 60% 10%, rgba(72,50,200,0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 10% 90%, rgba(47,200,255,0.05) 0%, transparent 45%);
   }
 
-  .showcase-col {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 6px 3px;
+  /* Subtle grid */
+  .showcase-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
   }
 
-  .showcase-col:nth-child(even) { margin-top: -60px; }
-  .showcase-col:nth-child(odd)  { animation: scrollUp 40s linear infinite; }
-  .showcase-col:nth-child(even) { animation: scrollDown 36s linear infinite; }
-  .showcase-col:nth-child(3)    { animation-duration: 44s; }
-  .showcase-col:nth-child(4)    { animation-duration: 32s; }
-  .showcase-col:nth-child(5)    { animation-duration: 48s; }
+  /* Floating game covers — static, no animation */
+  .showcase-covers {
+    position: absolute;
+    inset: 0;
+  }
 
-  @keyframes scrollUp   { from { transform: translateY(0);    } to { transform: translateY(-50%);  } }
-  @keyframes scrollDown { from { transform: translateY(-50%); } to { transform: translateY(0);     } }
-
-  .cover-tile {
-    width: 100%;
-    aspect-ratio: 3/4;
-    border-radius: 6px;
+  .sc-cover {
+    position: absolute;
+    border-radius: 10px;
     overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
     background: var(--bg3);
-    flex-shrink: 0;
-    border: 1px solid rgba(255,255,255,0.04);
   }
 
-  .cover-tile img {
-    width: 100%;
-    height: 100%;
+  .sc-cover img {
+    width: 100%; height: 100%;
     object-fit: cover;
     display: block;
-    opacity: 0.7;
-    transition: opacity 0.3s;
+    opacity: 0.65;
   }
 
   /* Dark gradient over the showcase */
@@ -105,8 +102,8 @@
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(to right, rgba(8,8,9,0.2) 0%, rgba(8,8,9,0.6) 100%),
-      linear-gradient(to bottom, rgba(8,8,9,0.4) 0%, transparent 30%, transparent 70%, rgba(8,8,9,0.4) 100%);
+      linear-gradient(to right, rgba(8,8,9,0.1) 0%, rgba(8,8,9,0.65) 100%),
+      linear-gradient(to bottom, rgba(8,8,9,0.5) 0%, transparent 25%, transparent 70%, rgba(8,8,9,0.5) 100%);
     z-index: 1;
   }
 
@@ -556,15 +553,9 @@
   <!-- ══ LEFT: SHOWCASE ══ -->
   <div class="showcase">
 
-    <!-- Film strip columns (covers injected by JS) -->
-    <div class="showcase-strip" id="showcase-strip">
-      <div class="showcase-col" id="col-0"></div>
-      <div class="showcase-col" id="col-1"></div>
-      <div class="showcase-col" id="col-2"></div>
-      <div class="showcase-col" id="col-3"></div>
-      <div class="showcase-col" id="col-4"></div>
-    </div>
-
+    <div class="showcase-bg"></div>
+    <div class="showcase-grid"></div>
+    <div class="showcase-covers" id="showcase-covers"></div>
     <div class="showcase-overlay"></div>
 
     <!-- Logo -->
@@ -952,13 +943,25 @@ document.addEventListener('keydown', e => {
 })();
 
 // ══════════════════════════════════════
-//  SHOWCASE COVERS
+//  SHOWCASE COVERS — static floating layout
 // ══════════════════════════════════════
 const SHOWCASE_IGDB_IDS = [
   119133, 185246, 148241, 119388, 25076,
   75235,  1877,   14362,  119171, 228542,
-  11133,  105049, 96217,  92400,  67921,
-  136189, 26226,  19560,  112875, 113112,
+];
+
+// Fixed positions: [left%, top%, width(px), rotation(deg)]
+const COVER_POSITIONS = [
+  [8,   8,  130,  -4],
+  [30,  5,  110,   3],
+  [55,  12, 140,  -2],
+  [74,  4,  120,   5],
+  [6,   52, 120,   3],
+  [28,  55, 130,  -3],
+  [52,  50, 115,   4],
+  [72,  48, 135,  -5],
+  [18,  30, 100,  -6],
+  [62,  28, 105,   6],
 ];
 
 async function loadShowcaseCovers() {
@@ -972,27 +975,18 @@ async function loadShowcaseCovers() {
       })
     });
     const games = await res.json();
-    const urls = games
-      .filter(g => g.cover?.url)
+    const urls = games.filter(g => g.cover?.url)
       .map(g => 'https:' + g.cover.url.replace('t_thumb', 't_cover_big'));
 
-    // Fill 5 columns, ~8 tiles each, duplicated for seamless loop
-    const cols = 5;
-    for (let c = 0; c < cols; c++) {
-      const colEl = document.getElementById(`col-${c}`);
-      // Assign a shuffled subset per column and duplicate for loop
-      const colUrls = [];
-      for (let i = 0; i < 8; i++) {
-        colUrls.push(urls[(c * 4 + i) % urls.length]);
-      }
-      // Duplicate for seamless scroll
-      [...colUrls, ...colUrls].forEach(url => {
-        const tile = document.createElement('div');
-        tile.className = 'cover-tile';
-        tile.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
-        colEl.appendChild(tile);
-      });
-    }
+    const container = document.getElementById('showcase-covers');
+    urls.forEach((url, i) => {
+      const [left, top, width, rot] = COVER_POSITIONS[i % COVER_POSITIONS.length];
+      const el = document.createElement('div');
+      el.className = 'sc-cover';
+      el.style.cssText = `left:${left}%;top:${top}%;width:${width}px;height:${width * 1.33}px;transform:rotate(${rot}deg)`;
+      el.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
+      container.appendChild(el);
+    });
   } catch(e) {
     console.warn('Showcase covers failed:', e);
   }
