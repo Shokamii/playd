@@ -970,21 +970,33 @@ const SHOWCASE_IGDB_IDS = [
   103298, // Super Mario Odyssey
 ];
 
-// [left%, top%, width(px), rotation(deg), anim-duration(s), anim-delay(s)]
+// [left%, top%, width(px), rotation(deg), anim-duration(s), anim-delay(s), gradient]
 const COVER_POSITIONS = [
-  [5,   5,  190,  -4, 6.0, 0.0],
-  [28,  3,  170,   3, 7.5, 0.8],
-  [52,  8,  200,  -2, 5.5, 1.5],
-  [72,  2,  180,   5, 8.0, 0.3],
-  [4,   48, 180,   3, 6.5, 1.1],
-  [26,  50, 190,  -3, 7.0, 0.6],
-  [51,  45, 175,   4, 5.8, 1.8],
-  [71,  44, 195,  -5, 6.8, 0.2],
-  [16,  27, 160,  -6, 7.2, 1.3],
-  [60,  25, 165,   6, 5.2, 0.9],
+  [5,   5,  190,  -4, 6.0, 0.0, 'linear-gradient(135deg,#1a0a0a,#3d1a0a)'],
+  [28,  3,  170,   3, 7.5, 0.8, 'linear-gradient(135deg,#0a1a0a,#1a3d1a)'],
+  [52,  8,  200,  -2, 5.5, 1.5, 'linear-gradient(135deg,#0a0a1a,#1a1a4d)'],
+  [72,  2,  180,   5, 8.0, 0.3, 'linear-gradient(135deg,#1a0a1a,#3d1a3d)'],
+  [4,   48, 180,   3, 6.5, 1.1, 'linear-gradient(135deg,#0a1a1a,#1a3d3d)'],
+  [26,  50, 190,  -3, 7.0, 0.6, 'linear-gradient(135deg,#1a1a0a,#3d3d1a)'],
+  [51,  45, 175,   4, 5.8, 1.8, 'linear-gradient(135deg,#1a0a0a,#4d1a0a)'],
+  [71,  44, 195,  -5, 6.8, 0.2, 'linear-gradient(135deg,#0a0a1a,#0a1a4d)'],
+  [16,  27, 160,  -6, 7.2, 1.3, 'linear-gradient(135deg,#1a1a0a,#4d3d0a)'],
+  [60,  25, 165,   6, 5.2, 0.9, 'linear-gradient(135deg,#0a1a0a,#0a4d1a)'],
 ];
 
 async function loadShowcaseCovers() {
+  const container = document.getElementById('showcase-covers');
+
+  // Render gradient placeholders immediately
+  COVER_POSITIONS.forEach(([left, top, width, rot, dur, delay, gradient], i) => {
+    const el = document.createElement('div');
+    el.className = 'sc-cover';
+    el.id = `sc-${i}`;
+    el.style.cssText = `left:${left}%;top:${top}%;width:${width}px;height:${Math.round(width*1.33)}px;background:${gradient};animation:float${i} ${dur}s ease-in-out ${delay}s infinite;`;
+    container.appendChild(el);
+  });
+
+  // Try to load real covers on top
   try {
     const res = await fetch('/api/igdb', {
       method: 'POST',
@@ -998,17 +1010,12 @@ async function loadShowcaseCovers() {
     const urls = games.filter(g => g.cover?.url)
       .map(g => 'https:' + g.cover.url.replace('t_thumb', 't_cover_big'));
 
-    const container = document.getElementById('showcase-covers');
     urls.forEach((url, i) => {
-      const [left, top, width, rot, dur, delay] = COVER_POSITIONS[i % COVER_POSITIONS.length];
-      const el = document.createElement('div');
-      el.className = 'sc-cover';
-      el.style.cssText = `left:${left}%;top:${top}%;width:${width}px;height:${Math.round(width*1.33)}px;animation:float${i} ${dur}s ease-in-out ${delay}s infinite;`;
-      el.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
-      container.appendChild(el);
+      const el = document.getElementById(`sc-${i}`);
+      if (el) el.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
     });
   } catch(e) {
-    console.warn('Showcase covers failed:', e);
+    // Placeholders stay visible — no console noise
   }
 }
 
